@@ -1,29 +1,135 @@
 import type { Node, Edge } from "@xyflow/react";
 import type { MindMapNodeData, NodeRecord } from "@/types/mindmap";
-import { getPathIds } from "./layout";
-import { layoutGraph } from "./layout";
+import { makeLoadMoreId } from "@/types/mindmap";
+import { TASK_PAGE_SIZE } from "./constants";
+import { getPathIds, layoutGraph } from "./layout";
+
+function getDirectChildren(
+  parentId: string,
+  cache: Map<string, NodeRecord>,
+): NodeRecord[] {
+  const children: NodeRecord[] = [];
+  for (const [, record] of cache) {
+    if (record.data.parentId === parentId) {
+      children.push(record);
+    }
+  }
+  return children.sort((a, b) => a.data.label.localeCompare(b.data.label));
+}
+
+function paginateListTasks(
+  listId: string,
+  cache: Map<string, NodeRecord>,
+  taskVisibleLimits: Map<string, number>,
+): { visible: NodeRecord[]; loadMore: NodeRecord | null; useCompact: boolean } {
+  const allTasks = getDirectChildren(listId, cache).filter(
+    (r) => r.data.type === "task",
+  );
+
+  const limit = taskVisibleLimits.get(listId) ?? TASK_PAGE_SIZE;
+  const visible = allTasks.slice(0, limit);
+  const remaining = allTasks.length - visible.length;
+  const useCompact = visible.length >= 8;
+
+  let loadMore: NodeRecord | null = null;
+  if (remaining > 0) {
+    loadMore = {
+      id: makeLoadMoreId(listId),
+      data: {
+        type: "loadmore",
+        clickupId: listId,
+        parentId: listId,
+        label: `Show ${remaining} more task${remaining === 1 ? "" : "s"}`,
+        listParentId: listId,
+        remainingCount: remaining,
+        hasChildren: false,
+        childrenLoaded: true,
+      },
+    };
+  }
+
+  return { visible, loadMore, useCompact: useCompact || remaining > 0 };
+}
 
 export function buildVisibleGraph(
   cache: Map<string, NodeRecord>,
   expandedIds: Set<string>,
   selectedId: string | null,
   loadingIds: Set<string>,
+  taskVisibleLimits: Map<string, number>,
 ): { nodes: Node<MindMapNodeData>[]; edges: Edge[] } {
   const pathIds = getPathIds(selectedId, cache);
   const visibleIds = new Set<string>();
+  const hiddenByPagination = new Set<string>();
+  const compactTaskIds = new Set<string>();
+  const loadMoreNodes: NodeRecord[] = [];
+
+  // Determine pagination visibility for expanded lists
+  for (const [id, record] of cache) {
+    if (record.data.type !== "list" || !expandedIds.has(id)) continue;
+
+    const { visible, loadMore, useCompact } = paginateListTasks(
+      id,
+      cache,
+      taskVisibleLimits,
+    );
+    const visibleTaskIds = new Set(visible.map((v) => v.id));
+
+    for (const child of getDirectChildren(id, cache)) {
+      if (child.data.type === "task" && !visibleTaskIds.has(child.id)) {
+        hiddenByPagination.add(child.id);
+      }
+    }
+
+    if (useCompact) {
+      for (const task of visible) {
+        compactTaskIds.add(task.id);
+      }
+    }
+
+    if (loadMore) loadMoreNodes.push(loadMore);
+  }
+
+  function collectTaskDescendants(taskId: string) {
+    for (const [childId, childRecord] of cache) {
+      if (childRecord.data.parentId === taskId && !hiddenByPagination.has(childId)) {
+        visibleIds.add(childId);
+        if (expandedIds.has(childId)) {
+          collectTaskDescendants(childId);
+        }
+      }
+    }
+  }
 
   function collectVisible(id: string) {
     visibleIds.add(id);
     if (!expandedIds.has(id)) return;
 
-    for (const [childId, record] of cache) {
-      if (record.data.parentId === id) {
+    const record = cache.get(id);
+
+    if (record?.data.type === "list") {
+      const { visible, loadMore } = paginateListTasks(id, cache, taskVisibleLimits);
+
+      for (const task of visible) {
+        visibleIds.add(task.id);
+        if (expandedIds.has(task.id)) {
+          collectTaskDescendants(task.id);
+        }
+      }
+      if (loadMore) visibleIds.add(loadMore.id);
+      return;
+    }
+
+    for (const [childId, childRecord] of cache) {
+      if (
+        childRecord.data.parentId === id &&
+        !hiddenByPagination.has(childId)
+      ) {
         collectVisible(childId);
       }
     }
   }
 
-  // Start from root nodes (no parent)
   for (const [id, record] of cache) {
     if (record.data.parentId === null) {
       collectVisible(id);
@@ -34,7 +140,9 @@ export function buildVisibleGraph(
   const rawNodes: Node<MindMapNodeData>[] = [];
 
   for (const id of visibleIds) {
-    const record = cache.get(id);
+    const cached = cache.get(id);
+    const loadMore = loadMoreNodes.find((n) => n.id === id);
+    const record = cached ?? loadMore;
     if (!record) continue;
 
     const data: MindMapNodeData = {
@@ -43,6 +151,7 @@ export function buildVisibleGraph(
       isSelected: id === selectedId,
       isExpanded: expandedIds.has(id),
       isLoading: loadingIds.has(id),
+      compact: compactTaskIds.has(id) || record.data.type === "loadmore",
     };
 
     rawNodes.push({
@@ -57,9 +166,10 @@ export function buildVisibleGraph(
         id: `${record.data.parentId}->${id}`,
         source: record.data.parentId,
         target: id,
-        className: pathIds.has(id) && pathIds.has(record.data.parentId)
-          ? "path-highlight"
-          : undefined,
+        className:
+          pathIds.has(id) && pathIds.has(record.data.parentId)
+            ? "path-highlight"
+            : undefined,
       });
     }
   }
@@ -72,7 +182,7 @@ export function getBreadcrumb(
   selectedId: string | null,
   cache: Map<string, NodeRecord>,
 ): NodeRecord[] {
-  if (!selectedId) return [];
+  if (!selectedId || selectedId.startsWith("loadmore:")) return [];
   const crumbs: NodeRecord[] = [];
   let current: string | null = selectedId;
 

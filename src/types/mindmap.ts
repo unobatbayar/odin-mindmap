@@ -4,7 +4,8 @@ export type NodeType =
   | "folder"
   | "list"
   | "task"
-  | "subtask";
+  | "subtask"
+  | "loadmore";
 
 export interface MindMapAssignee {
   username: string;
@@ -30,6 +31,12 @@ export interface MindMapNodeData {
   isExpanded?: boolean;
   isLoading?: boolean;
   hasChildren?: boolean;
+  /** For loadmore nodes — the list node id to paginate */
+  listParentId?: string;
+  /** Remaining task count shown on load-more node */
+  remainingCount?: number;
+  /** Render in compact mode (dense lists) */
+  compact?: boolean;
   [key: string]: unknown;
 }
 
@@ -49,8 +56,15 @@ export function makeNodeId(type: NodeType, clickupId: string): string {
 }
 
 export function parseNodeId(id: string): { type: NodeType; clickupId: string } {
+  if (id.startsWith("loadmore:")) {
+    return { type: "loadmore", clickupId: id.slice("loadmore:".length) };
+  }
   const [type, ...rest] = id.split(":");
   return { type: type as NodeType, clickupId: rest.join(":") };
+}
+
+export function makeLoadMoreId(listNodeId: string): string {
+  return `loadmore:${listNodeId}`;
 }
 
 export function isTaskType(type: NodeType): boolean {

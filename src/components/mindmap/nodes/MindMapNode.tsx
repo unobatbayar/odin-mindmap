@@ -20,21 +20,39 @@ function formatDueDate(ms: string | null | undefined): string | null {
 function MindMapNodeComponent({ data }: NodeProps) {
   const node = data as MindMapNodeData;
   const isTask = node.type === "task" || node.type === "subtask";
-  const accent = TYPE_COLORS[node.type] ?? "#6366f1";
+  const isLoadMore = node.type === "loadmore";
+  const accent = isLoadMore ? "#6366f1" : (TYPE_COLORS[node.type] ?? "#6366f1");
   const due = formatDueDate(node.dueDate);
+  const width = node.compact ? "w-[200px]" : "w-[220px]";
+
+  if (isLoadMore) {
+    return (
+      <>
+        <Handle type="target" position={Position.Left} className="!bg-zinc-400 !w-2 !h-2 !border-0" />
+        <button
+          type="button"
+          data-load-more
+          className={`${width} rounded-xl border border-dashed border-indigo-400 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-100 dark:border-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400 dark:hover:bg-indigo-950`}
+        >
+          {node.label}
+        </button>
+        <Handle type="source" position={Position.Right} className="!bg-transparent !w-0 !h-0 !border-0" />
+      </>
+    );
+  }
 
   return (
     <>
       <Handle type="target" position={Position.Left} className="!bg-zinc-400 !w-2 !h-2 !border-0" />
       <div
         className={`
-          w-[220px] rounded-xl border bg-[var(--panel)] shadow-sm transition-all duration-200
+          ${width} rounded-xl border bg-[var(--panel)] shadow-sm transition-all duration-200
           ${node.isSelected ? "ring-2 ring-indigo-500 shadow-md" : ""}
           ${node.isOnPath && !node.isSelected ? "border-indigo-300 dark:border-indigo-700" : "border-[var(--border)]"}
         `}
         style={{ borderLeftWidth: 3, borderLeftColor: accent }}
       >
-        <div className="px-3 py-2.5">
+        <div className={node.compact ? "px-2.5 py-2" : "px-3 py-2.5"}>
           <div className="flex items-start gap-2">
             {node.hasChildren && (
               <button
@@ -55,17 +73,19 @@ function MindMapNodeComponent({ data }: NodeProps) {
               </button>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium leading-tight text-zinc-900 dark:text-zinc-100">
+              <p className={`truncate font-medium leading-tight text-zinc-900 dark:text-zinc-100 ${node.compact ? "text-xs" : "text-sm"}`}>
                 {node.label}
               </p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
-                {node.type}
-                {node.childCount != null && !node.childrenLoaded
-                  ? ` · ${node.childCount}`
-                  : ""}
-              </p>
+              {!node.compact && (
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
+                  {node.type}
+                  {node.childCount != null && !node.childrenLoaded
+                    ? ` · ${node.childCount}`
+                    : ""}
+                </p>
+              )}
             </div>
-            {node.assignees && node.assignees.length > 0 && (
+            {!node.compact && node.assignees && node.assignees.length > 0 && (
               <div className="flex -space-x-1.5 shrink-0">
                 {node.assignees.slice(0, 2).map((a) => (
                   <Avatar key={a.username} name={a.username} src={a.profilePicture} size={20} />
@@ -74,7 +94,7 @@ function MindMapNodeComponent({ data }: NodeProps) {
             )}
           </div>
 
-          {isTask && (node.status || node.priority || due) && (
+          {isTask && !node.compact && (node.status || node.priority || due) && (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {node.status && (
                 <Badge label={node.status.name} color={node.status.color} />
@@ -89,6 +109,16 @@ function MindMapNodeComponent({ data }: NodeProps) {
               {due && (
                 <span className="text-[10px] text-zinc-400">{due}</span>
               )}
+            </div>
+          )}
+
+          {isTask && node.compact && node.status && (
+            <div className="mt-1">
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: node.status.color }}
+                title={node.status.name}
+              />
             </div>
           )}
         </div>

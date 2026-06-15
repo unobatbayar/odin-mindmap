@@ -15,6 +15,8 @@ import { MindMapNode } from "./nodes/MindMapNode";
 import { MindMapToolbar } from "./MindMapToolbar";
 import { NodeDetailPanel } from "./NodeDetailPanel";
 import { buildVisibleGraph, getBreadcrumb } from "@/lib/mindmap/buildGraph";
+import { getAncestorIds, getSubtreeNodeIds } from "@/lib/mindmap/layout";
+import { TASK_PAGE_SIZE } from "@/lib/mindmap/constants";
 import { fetchWorkspaces, fetchChildren } from "@/lib/mindmap/api";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { parseNodeId, type MindMapNodeData, type NodeRecord } from "@/types/mindmap";
@@ -32,10 +34,12 @@ function MindMapCanvasInner() {
   const [cache, setCache] = useState<Map<string, NodeRecord>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
+  const [taskVisibleLimits, setTaskVisibleLimits] = useState<Map<string, number>>(new Map());
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const fitOnNextLayout = useRef(false);
+  const focusAfterLayoutRef = useRef<{ nodeId: string; mode: "subtree" | "self" } | null>(null);
   const cacheRef = useRef(cache);
   cacheRef.current = cache;
 
@@ -46,8 +50,8 @@ function MindMapCanvasInner() {
   );
 
   const { nodes, edges } = useMemo(
-    () => buildVisibleGraph(cache, expandedIds, selectedId, loadingIds),
-    [cache, expandedIds, selectedId, loadingIds],
+    () => buildVisibleGraph(cache, expandedIds, selectedId, loadingIds, taskVisibleLimits),
+    [cache, expandedIds, selectedId, loadingIds, taskVisibleLimits],
   );
 
   // Initial load: workspaces, auto-expand workspace roots
@@ -117,13 +121,38 @@ function MindMapCanvasInner() {
     };
   }, []);
 
-  // Fit view after layout updates
+  // Auto fit / recenter after layout changes
   useEffect(() => {
-    if (fitOnNextLayout.current && nodes.length > 0) {
-      fitOnNextLayout.current = false;
-      requestAnimationFrame(() => fitView({ padding: 0.2, duration: 300 }));
-    }
-  }, [nodes, fitView]);
+    if (nodes.length === 0) return;
+
+    requestAnimationFrame(() => {
+      if (focusAfterLayoutRef.current) {
+        const { nodeId, mode } = focusAfterLayoutRef.current;
+        focusAfterLayoutRef.current = null;
+
+        if (mode === "subtree") {
+          const ids = getSubtreeNodeIds(nodeId, nodes, edges);
+          fitView({
+            nodes: ids.map((id) => ({ id })),
+            padding: 0.3,
+            duration: 400,
+            maxZoom: 1.1,
+          });
+        } else {
+          const ids = getAncestorIds(nodeId, cacheRef.current);
+          fitView({
+            nodes: ids.map((id) => ({ id })),
+            padding: 0.35,
+            duration: 400,
+            maxZoom: 1.2,
+          });
+        }
+      } else if (fitOnNextLayout.current) {
+        fitOnNextLayout.current = false;
+        fitView({ padding: 0.2, duration: 300 });
+      }
+    });
+  }, [nodes, edges, fitView]);
 
   const loadChildren = useCallback(async (nodeId: string): Promise<boolean> => {
     let shouldLoad = false;
@@ -172,7 +201,15 @@ function MindMapCanvasInner() {
         return next;
       });
 
-      fitOnNextLayout.current = true;
+      // Reset pagination when freshly loading a list
+      if (type === "list") {
+        setTaskVisibleLimits((prev) => {
+          const next = new Map(prev);
+          next.set(nodeId, TASK_PAGE_SIZE);
+          return next;
+        });
+      }
+
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load children");
@@ -184,6 +221,15 @@ function MindMapCanvasInner() {
         return next;
       });
     }
+  }, []);
+
+  const loadMoreTasks = useCallback((listNodeId: string) => {
+    setTaskVisibleLimits((prev) => {
+      const next = new Map(prev);
+      next.set(listNodeId, (next.get(listNodeId) ?? TASK_PAGE_SIZE) + TASK_PAGE_SIZE);
+      return next;
+    });
+    focusAfterLayoutRef.current = { nodeId: listNodeId, mode: "subtree" };
   }, []);
 
   const toggleExpand = useCallback(
@@ -199,6 +245,7 @@ function MindMapCanvasInner() {
           next.delete(nodeId);
           return next;
         });
+        focusAfterLayoutRef.current = { nodeId, mode: "self" };
         return;
       }
 
@@ -208,6 +255,7 @@ function MindMapCanvasInner() {
       }
 
       setExpandedIds((prev) => cloneSet(prev).add(nodeId));
+      focusAfterLayoutRef.current = { nodeId, mode: "subtree" };
     },
     [expandedIds, loadChildren],
   );
@@ -215,17 +263,28 @@ function MindMapCanvasInner() {
   const onNodeClick: NodeMouseHandler = useCallback(
     (event, node) => {
       const target = event.target as HTMLElement;
+
+      if (target.closest("[data-load-more]")) {
+        const listParentId = (node.data as MindMapNodeData).listParentId;
+        if (listParentId) loadMoreTasks(listParentId);
+        return;
+      }
+
       if (target.closest("[data-expand-toggle]")) {
         toggleExpand(node.id);
         return;
       }
+
+      if ((node.data as MindMapNodeData).type === "loadmore") return;
+
       setSelectedId(node.id);
     },
-    [toggleExpand],
+    [toggleExpand, loadMoreTasks],
   );
 
   const onNodeDoubleClick: NodeMouseHandler = useCallback(
     (_event, node) => {
+      if ((node.data as MindMapNodeData).type === "loadmore") return;
       toggleExpand(node.id);
     },
     [toggleExpand],
@@ -297,7 +356,7 @@ function MindMapCanvasInner() {
               onNodeClick={onNodeClick}
               onNodeDoubleClick={onNodeDoubleClick}
               fitView
-              minZoom={0.1}
+              minZoom={0.05}
               maxZoom={2}
               proOptions={{ hideAttribution: true }}
               onlyRenderVisibleElements
