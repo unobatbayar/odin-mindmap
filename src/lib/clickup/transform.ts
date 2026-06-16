@@ -199,6 +199,87 @@ export function tasksToNodes(
   return nodes;
 }
 
+export function tasksToMemberListNodes(
+  tasks: ClickUpTask[],
+  memberNodeId: string,
+): NodeRecord[] {
+  // Group tasks by ClickUp list so member scope reads like “Projects → Tasks”.
+  // We create real `list:` node ids; this is safe because the UI resets cache when switching scopes.
+  const listById = new Map<string, { id: string; name: string }>();
+  for (const t of tasks) {
+    if (t.list?.id) {
+      listById.set(t.list.id, { id: t.list.id, name: t.list.name });
+    }
+  }
+
+  const listNodes: NodeRecord[] = Array.from(listById.values())
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((l) => ({
+      id: makeNodeId("list", l.id),
+      data: {
+        type: "list",
+        clickupId: l.id,
+        parentId: memberNodeId,
+        label: l.name,
+        hasChildren: true,
+        childrenLoaded: true,
+      },
+    }));
+
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+
+  function listParentFor(task: ClickUpTask): string {
+    const listId = task.list?.id;
+    return listId ? makeNodeId("list", listId) : memberNodeId;
+  }
+
+  function parentNodeId(task: ClickUpTask): string {
+    if (!task.parent) return listParentFor(task);
+    const parent = byId.get(task.parent);
+    const parentType = parent?.parent ? "subtask" : "task";
+    return makeNodeId(parentType, task.parent);
+  }
+
+  function nodeType(task: ClickUpTask): "task" | "subtask" {
+    return task.parent ? "subtask" : "task";
+  }
+
+  const taskNodes: NodeRecord[] = tasks.map((task) => {
+    const type = nodeType(task);
+    const id = makeNodeId(type, task.id);
+    const parentId = parentNodeId(task);
+    const childCount = tasks.filter((t) => t.parent === task.id).length;
+
+    return {
+      id,
+      data: {
+        ...taskToNode(task, parentId).data,
+        parentId,
+        type,
+        hasChildren: childCount > 0,
+        childCount: childCount > 0 ? childCount : undefined,
+        childrenLoaded: true,
+      },
+    };
+  });
+
+  // Update list nodes with task counts (for compact layout / pagination hints).
+  const counts = new Map<string, number>();
+  for (const n of taskNodes) {
+    if (n.data.type !== "task") continue;
+    const parent = n.data.parentId;
+    if (!parent || !parent.startsWith("list:")) continue;
+    counts.set(parent, (counts.get(parent) ?? 0) + 1);
+  }
+
+  const listNodesWithCounts = listNodes.map((n) => ({
+    ...n,
+    data: { ...n.data, childCount: counts.get(n.id) ?? 0 },
+  }));
+
+  return [...listNodesWithCounts, ...taskNodes];
+}
+
 export function applyTaskUpdate(
   data: MindMapNodeData,
   update: { name?: string; status?: string; priority?: number | null },

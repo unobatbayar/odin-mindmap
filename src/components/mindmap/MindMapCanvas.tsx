@@ -12,19 +12,21 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { MindMapNode } from "./nodes/MindMapNode";
-import { MindMapToolbar } from "./MindMapToolbar";
+import { MindMapToolbar, type MemberOption, type MindMapScope } from "./MindMapToolbar";
 import { NodeDetailPanel } from "./NodeDetailPanel";
 import { buildVisibleGraph, getBreadcrumb } from "@/lib/mindmap/buildGraph";
 import { getAncestorIds, getSubtreeNodeIds } from "@/lib/mindmap/layout";
 import { TASK_PAGE_SIZE, type TaskStatusFilter } from "@/lib/mindmap/constants";
 import { fetchWorkspaces, fetchChildren } from "@/lib/mindmap/api";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { parseNodeId, isTaskType, type MindMapNodeData, type NodeRecord } from "@/types/mindmap";
+import { makeNodeId, parseNodeId, isTaskType, type MindMapNodeData, type NodeRecord } from "@/types/mindmap";
 import { matchesStatusFilter } from "@/lib/mindmap/statusFilter";
 
 const nodeTypes = { mindmap: MindMapNode };
 
 const LARGE_LIST_THRESHOLD = 200;
+const ADMIN_UNLOCK_KEY = "odin_admin_unlocked";
+const SCOPE_KEY = "odin_scope";
 
 function cloneSet<T>(set: Set<T>): Set<T> {
   return new Set(set);
@@ -40,10 +42,50 @@ function MindMapCanvasInner() {
   const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>("all");
   const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [scope, setScope] = useState<MindMapScope>(() => {
+    try {
+      const raw = window.localStorage.getItem(SCOPE_KEY);
+      if (!raw) return { mode: "all" };
+      const parsed = JSON.parse(raw) as MindMapScope;
+      if (!parsed || typeof parsed !== "object") return { mode: "all" };
+      if (parsed.mode === "all") return { mode: "all" };
+      if (
+        parsed.mode === "member" &&
+        typeof (parsed as any).teamId === "string" &&
+        typeof (parsed as any).userId === "string" &&
+        typeof (parsed as any).label === "string"
+      ) {
+        return parsed;
+      }
+      return { mode: "all" };
+    } catch {
+      return { mode: "all" };
+    }
+  });
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [members, setMembers] = useState<MemberOption[]>([]);
   const fitOnNextLayout = useRef(false);
   const focusAfterLayoutRef = useRef<{ nodeId: string; mode: "subtree" | "self" } | null>(null);
   const cacheRef = useRef(cache);
   cacheRef.current = cache;
+
+  useEffect(() => {
+    try {
+      setAdminUnlocked(window.localStorage.getItem(ADMIN_UNLOCK_KEY) === "1");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleAdminUnlockedChange = useCallback((unlocked: boolean) => {
+    setAdminUnlocked(unlocked);
+    try {
+      if (unlocked) window.localStorage.setItem(ADMIN_UNLOCK_KEY, "1");
+      else window.localStorage.removeItem(ADMIN_UNLOCK_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const selectedNode = selectedId ? cache.get(selectedId) ?? null : null;
   const breadcrumbs = useMemo(
@@ -51,22 +93,66 @@ function MindMapCanvasInner() {
     [selectedId, cache],
   );
 
+  const viewCache = useMemo(() => {
+    // Filter graph for current mode without mutating the underlying cache.
+    const next = new Map<string, NodeRecord>();
+
+    const isPeopleish = (t: string) => t === "people" || t === "member";
+
+    if (scope.mode === "all") {
+      for (const [id, rec] of cache) {
+        if (!adminUnlocked && isPeopleish(rec.data.type)) continue;
+        next.set(id, rec);
+      }
+      return next;
+    }
+
+    // Member scope: show only the selected member subtree (single-root mindmap).
+    for (const [id, rec] of cache) {
+      if (rec.data.parentId === null || rec.data.parentId === undefined) {
+        // Only include the selected member root in this mode.
+        if (rec.data.type === "member" && rec.data.clickupId === scope.userId) {
+          next.set(id, rec);
+        }
+        continue;
+      }
+      // Include only descendants of the selected member node.
+      const memberId = makeNodeId("member", scope.userId);
+      if (id === memberId || rec.data.parentId === memberId) next.set(id, rec);
+    }
+
+    // Add deeper descendants (tasks under tasks, etc.)
+    let added = true;
+    while (added) {
+      added = false;
+      for (const [id, rec] of cache) {
+        if (next.has(id)) continue;
+        if (rec.data.parentId && next.has(rec.data.parentId)) {
+          next.set(id, rec);
+          added = true;
+        }
+      }
+    }
+
+    return next;
+  }, [cache, scope, adminUnlocked]);
+
   const { nodes, edges } = useMemo(
     () =>
       buildVisibleGraph(
-        cache,
+        viewCache,
         expandedIds,
         selectedId,
         loadingIds,
         taskVisibleLimits,
         statusFilter,
       ),
-    [cache, expandedIds, selectedId, loadingIds, taskVisibleLimits, statusFilter],
+    [viewCache, expandedIds, selectedId, loadingIds, taskVisibleLimits, statusFilter],
   );
 
   useEffect(() => {
     if (!selectedId) return;
-    const record = cache.get(selectedId);
+    const record = viewCache.get(selectedId);
     if (
       record &&
       isTaskType(record.data.type) &&
@@ -74,14 +160,28 @@ function MindMapCanvasInner() {
     ) {
       setSelectedId(null);
     }
-  }, [statusFilter, selectedId, cache]);
+  }, [statusFilter, selectedId, viewCache]);
 
-  // Initial load: workspaces, auto-expand workspace roots
+  const resetGraph = useCallback(() => {
+    setCache(new Map());
+    setExpandedIds(new Set());
+    setLoadingIds(new Set());
+    setTaskVisibleLimits(new Map());
+    setSelectedId(null);
+    setError(null);
+    fitOnNextLayout.current = false;
+    focusAfterLayoutRef.current = null;
+  }, []);
+
+  // Initial load / scope load
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
+        resetGraph();
+        setInitialLoading(true);
+
         const workspaceNodes = await fetchWorkspaces();
         if (cancelled) return;
 
@@ -93,8 +193,36 @@ function MindMapCanvasInner() {
           return next;
         });
 
-        const wsIds = workspaceNodes.map((n) => n.id);
+        const wsIds =
+          scope.mode === "all"
+            ? workspaceNodes.map((n) => n.id)
+            : [makeNodeId("workspace", scope.teamId)];
+
         setExpandedIds(new Set(wsIds));
+
+        // Prefetch members (for the Scope dropdown) regardless of admin.
+        // Admin controls whether People branch is visible in the All graph, not whether scope is usable.
+        const allMembers: MemberOption[] = [];
+        for (const wsId of workspaceNodes.map((n) => n.id)) {
+          const { clickupId } = parseNodeId(wsId);
+          try {
+            const res = await fetch(`/api/clickup/workspaces/${clickupId}/members`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const opts: MemberOption[] = (data.nodes as NodeRecord[]).map((n) => ({
+              teamId: clickupId,
+              userId: n.data.clickupId,
+              label: n.data.label,
+              profilePicture:
+                (n.data.assignees?.[0]?.profilePicture as string | null | undefined) ??
+                null,
+            }));
+            allMembers.push(...opts);
+          } catch {
+            // ignore
+          }
+        }
+        if (!cancelled) setMembers(allMembers.sort((a, b) => a.label.localeCompare(b.label)));
 
         for (const wsId of wsIds) {
           setLoadingIds((prev) => cloneSet(prev).add(wsId));
@@ -109,9 +237,7 @@ function MindMapCanvasInner() {
                   data: { ...parent.data, childrenLoaded: true },
                 });
               }
-              for (const child of children) {
-                next.set(child.id, child);
-              }
+              for (const child of children) next.set(child.id, child);
               return next;
             });
           } catch (err) {
@@ -122,6 +248,66 @@ function MindMapCanvasInner() {
             setLoadingIds((prev) => {
               const next = cloneSet(prev);
               next.delete(wsId);
+              return next;
+            });
+          }
+        }
+
+        if (scope.mode === "member") {
+          const memberId = makeNodeId("member", scope.userId);
+
+          // Create a single-root member node.
+          setCache((prev) => {
+            const next = new Map(prev);
+            next.set(memberId, {
+              id: memberId,
+              data: {
+                type: "member",
+                clickupId: scope.userId,
+                parentId: null,
+                label: scope.label,
+                assignees: scope.profilePicture
+                  ? [{ username: scope.label, profilePicture: scope.profilePicture }]
+                  : [{ username: scope.label, profilePicture: null }],
+                workspaceId: scope.teamId,
+                hasChildren: true,
+                childrenLoaded: false,
+              },
+            });
+            return next;
+          });
+
+          // Start collapsed (single node). User expands manually.
+          // (No auto-expansion in member scope.)
+
+          setLoadingIds((prev) => cloneSet(prev).add(memberId));
+          try {
+            const memberChildren = await fetchChildren(memberId, { workspaceId: scope.teamId });
+            if (cancelled) return;
+            setCache((prev) => {
+              const next = new Map(prev);
+              const parent = next.get(memberId);
+              if (parent) {
+                const taskCount = memberChildren.filter((c) => c.data.type === "task").length;
+                next.set(memberId, {
+                  ...parent,
+                  data: { ...parent.data, childrenLoaded: true, childCount: taskCount },
+                });
+              }
+              for (const child of memberChildren) next.set(child.id, child);
+              return next;
+            });
+
+            // Set pagination defaults for the member root.
+            setTaskVisibleLimits((prev) => {
+              const next = new Map(prev);
+              next.set(memberId, TASK_PAGE_SIZE);
+              return next;
+            });
+          } finally {
+            setLoadingIds((prev) => {
+              const next = cloneSet(prev);
+              next.delete(memberId);
               return next;
             });
           }
@@ -141,7 +327,7 @@ function MindMapCanvasInner() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scope, adminUnlocked, resetGraph]);
 
   // Auto fit / recenter after layout changes
   useEffect(() => {
@@ -362,6 +548,18 @@ function MindMapCanvasInner() {
         onZoomOut={() => zoomOut({ duration: 200 })}
         onFitView={() => fitView({ padding: 0.2, duration: 300 })}
         onCenterSelected={centerSelected}
+        scope={scope}
+        onScopeChange={(next) => {
+          setScope(next);
+          try {
+            window.localStorage.setItem(SCOPE_KEY, JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+        }}
+        adminUnlocked={adminUnlocked}
+        onAdminUnlockedChange={handleAdminUnlockedChange}
+        members={members}
       />
 
       {error && (

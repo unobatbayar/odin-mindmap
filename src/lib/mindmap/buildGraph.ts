@@ -128,7 +128,10 @@ export function buildVisibleGraph(
 
     const record = cache.get(id);
 
-    if (record?.data.type === "list" || record?.data.type === "member") {
+    // Lists (and expanded members with direct tasks) paginate task children.
+    // Note: members may also have non-task children (e.g. synthetic list/project nodes in Me-only mode),
+    // so we must not early-return for members.
+    if (record?.data.type === "list") {
       const { visible, loadMore } = paginateTaskChildren(
         id,
         cache,
@@ -143,6 +146,39 @@ export function buildVisibleGraph(
         }
       }
       if (loadMore) visibleIds.add(loadMore.id);
+      return;
+    }
+
+    if (record?.data.type === "member") {
+      // Show non-task children (e.g. list/project nodes), but still allow direct tasks under a member
+      // (legacy behavior) to be paginated.
+      const directChildren = getDirectChildren(id, cache).filter((c) => !isHidden(c.id));
+      const taskChildren = directChildren.filter((c) => c.data.type === "task");
+      const otherChildren = directChildren.filter((c) => c.data.type !== "task");
+
+      // Render other children normally
+      for (const child of otherChildren) {
+        collectVisible(child.id);
+      }
+
+      // Render tasks with pagination
+      const { visible, loadMore } = paginateTaskChildren(
+        id,
+        cache,
+        taskVisibleLimits,
+        hiddenByFilter,
+      );
+      for (const task of visible) {
+        visibleIds.add(task.id);
+        if (expandedIds.has(task.id)) collectTaskDescendants(task.id);
+      }
+      if (loadMore) visibleIds.add(loadMore.id);
+
+      // If there are tasks but we didn't paginate (edge case), ensure tasks are visible.
+      // (Mostly here for safety; paginateTaskChildren is authoritative.)
+      if (taskChildren.length > 0 && visible.length === 0) {
+        for (const t of taskChildren) visibleIds.add(t.id);
+      }
       return;
     }
 
