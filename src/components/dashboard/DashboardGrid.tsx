@@ -27,7 +27,7 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
           only
         </p>
       )}
-      <KpiGrid totals={stats.totals} />
+      <KpiGrid totals={stats.totals} dueTasks={stats.dueTasks} />
       <ForecastTimeline
         forecast={stats.forecast}
         weeklyCompleted={stats.weeklyCompleted}

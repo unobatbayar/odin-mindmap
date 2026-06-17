@@ -17,6 +17,7 @@ export interface DashboardTaskSummary {
   name: string;
   status: { label: string; color: string; type: string };
   updatedAt: string;
+  dueDate?: string | null;
   assignees: DashboardAssignee[];
   listName?: string;
   url: string;
@@ -85,6 +86,10 @@ export interface DashboardStats {
   recentActivity: {
     updated: DashboardTaskSummary[];
     completed: DashboardTaskSummary[];
+  };
+  dueTasks: {
+    overdue: DashboardTaskSummary[];
+    dueThisWeek: DashboardTaskSummary[];
   };
   weeklyCompleted: { weekLabel: string; count: number }[];
   forecast: DashboardForecast;

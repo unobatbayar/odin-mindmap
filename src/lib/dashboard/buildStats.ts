@@ -132,6 +132,33 @@ export async function buildDashboardStats(
 
   const weeklyCompleted = buildWeeklyCompleted(tasks, now);
 
+  const overdueTasks = tasks
+    .filter((t) => {
+      const due = parseTimestamp(t.due_date);
+      return due !== null && t.status.type !== "closed" && due < now;
+    })
+    .sort(
+      (a, b) =>
+        (parseTimestamp(a.due_date) ?? 0) - (parseTimestamp(b.due_date) ?? 0),
+    )
+    .map(toTaskSummary);
+
+  const dueThisWeekTasks = tasks
+    .filter((t) => {
+      const due = parseTimestamp(t.due_date);
+      return (
+        due !== null &&
+        t.status.type !== "closed" &&
+        due >= now &&
+        due <= weekEnd
+      );
+    })
+    .sort(
+      (a, b) =>
+        (parseTimestamp(a.due_date) ?? 0) - (parseTimestamp(b.due_date) ?? 0),
+    )
+    .map(toTaskSummary);
+
   const forecast = buildForecast(open, inProgress, weeklyCompleted, now);
   const nextMilestoneForecast = buildMilestoneForecast(milestones, forecast);
 
@@ -156,6 +183,10 @@ export async function buildDashboardStats(
     recentActivity: {
       updated: recentUpdated,
       completed: recentCompleted,
+    },
+    dueTasks: {
+      overdue: overdueTasks,
+      dueThisWeek: dueThisWeekTasks,
     },
     weeklyCompleted,
     forecast,
@@ -321,6 +352,7 @@ function toTaskSummary(task: ClickUpTask): DashboardTaskSummary {
       type: task.status.type,
     },
     updatedAt: task.date_updated ?? task.date_closed ?? "",
+    dueDate: task.due_date,
     assignees: task.assignees.map(toAssignee),
     listName: task.list?.name,
     url: task.url,
