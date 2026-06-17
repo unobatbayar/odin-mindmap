@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { AppNav } from "@/components/AppNav";
 import { useTheme } from "@/components/ui/ThemeProvider";
-import { NetworkCanvas, useNetworkWorkspaces } from "@/components/network/NetworkCanvas";
+import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
+import { NetworkCanvas } from "@/components/network/NetworkCanvas";
 import type { NetworkViewMode } from "@/types/network";
 
 function IconSun() {
@@ -27,13 +28,10 @@ function IconMoon() {
 
 export default function NetworkPage() {
   const { theme, toggleTheme } = useTheme();
-  const { workspaces, loading: wsLoading } = useNetworkWorkspaces();
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
   const [viewMode, setViewMode] = useState<NetworkViewMode>("people");
   const [collabOnly, setCollabOnly] = useState(false);
   const [search, setSearch] = useState("");
-
-  const activeTeamId = teamId ?? workspaces[0]?.id ?? null;
 
   return (
     <div className="flex h-screen flex-col">

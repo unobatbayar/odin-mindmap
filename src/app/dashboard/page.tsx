@@ -6,7 +6,7 @@ import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { Button } from "@/components/ui/Button";
 import { useTheme } from "@/components/ui/ThemeProvider";
-import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
 import { fetchDashboardStats } from "@/lib/dashboard/api";
 import type { DashboardDateRange, DashboardProject, DashboardStats } from "@/types/dashboard";
 
@@ -106,13 +106,10 @@ function DashboardContent({
 
 export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
-  const { workspaces, loading: wsLoading } = useWorkspaces();
-  const [teamId, setTeamId] = useState<string | null>(null);
+  const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
   const [range, setRange] = useState<DashboardDateRange>("30d");
   const [listId, setListId] = useState<string | null>(null);
   const [projects, setProjects] = useState<DashboardProject[]>([]);
-
-  const activeTeamId = teamId ?? workspaces[0]?.id ?? null;
 
   const handleTeamChange = (id: string) => {
     setTeamId(id);

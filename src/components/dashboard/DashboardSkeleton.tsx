@@ -36,6 +36,14 @@ export function DashboardSkeleton() {
           </div>
         </div>
       </div>
+      <div className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
+        <div className="loading-shimmer h-4 w-28 rounded" />
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="loading-shimmer h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
       <div className="glass-strong h-72 rounded-2xl border border-[var(--border)] p-5 shadow-surface">
         <div className="loading-shimmer h-4 w-32 rounded" />
         <div className="mt-4 grid gap-4 lg:grid-cols-2">

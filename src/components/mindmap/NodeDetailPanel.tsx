@@ -12,6 +12,7 @@ import { isTaskType, type MindMapNodeData, type NodeRecord } from "@/types/mindm
 
 interface NodeDetailPanelProps {
   node: NodeRecord | null;
+  readOnly?: boolean;
   onClose: () => void;
   onUpdate: (nodeId: string, data: MindMapNodeData) => void;
 }
@@ -33,7 +34,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function NodeDetailPanel({ node, onClose, onUpdate }: NodeDetailPanelProps) {
+export function NodeDetailPanel({ node, readOnly = false, onClose, onUpdate }: NodeDetailPanelProps) {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState<string>("");
@@ -41,7 +42,7 @@ export function NodeDetailPanel({ node, onClose, onUpdate }: NodeDetailPanelProp
   const [error, setError] = useState<string | null>(null);
 
   const data = node?.data;
-  const editable = data ? isTaskType(data.type) : false;
+  const editable = data ? isTaskType(data.type) && !readOnly : false;
 
   useEffect(() => {
     if (!data) return;
@@ -168,17 +169,26 @@ export function NodeDetailPanel({ node, onClose, onUpdate }: NodeDetailPanelProp
             )}
           </div>
         ) : (
-          <div>
-            <FieldLabel>Name</FieldLabel>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{data.label}</p>
-          </div>
-        )}
+          <>
+            <div>
+              <FieldLabel>Name</FieldLabel>
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{data.label}</p>
+            </div>
 
-        {data.status && !editable && (
-          <div>
-            <FieldLabel>Status</FieldLabel>
-            <Badge label={data.status.name} color={data.status.color} />
-          </div>
+            {data.status && (
+              <div>
+                <FieldLabel>Status</FieldLabel>
+                <Badge label={data.status.name} color={data.status.color} />
+              </div>
+            )}
+
+            {data.priority && (
+              <div>
+                <FieldLabel>Priority</FieldLabel>
+                <Badge label={data.priority.label} color={data.priority.color} />
+              </div>
+            )}
+          </>
         )}
 
         {data.dueDate && (

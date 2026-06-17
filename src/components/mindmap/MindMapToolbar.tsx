@@ -21,6 +21,11 @@ export interface MemberOption {
   profilePicture?: string | null;
 }
 
+interface WorkspaceOption {
+  id: string;
+  label: string;
+}
+
 interface MindMapToolbarProps {
   breadcrumbs: NodeRecord[];
   statusFilter: TaskStatusFilter;
@@ -28,10 +33,15 @@ interface MindMapToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitView: () => void;
+  workspaces: WorkspaceOption[];
+  activeTeamId: string | null;
+  wsLoading: boolean;
+  onTeamChange: (teamId: string) => void;
   scope: MindMapScope;
   onScopeChange: (scope: MindMapScope) => void;
   adminUnlocked: boolean;
-  onAdminUnlockedChange: (unlocked: boolean) => void;
+  onAdminUnlock: (pin: string) => Promise<boolean>;
+  onAdminLock: () => void;
   members: MemberOption[];
 }
 
@@ -250,21 +260,37 @@ export function MindMapToolbar({
   onZoomIn,
   onZoomOut,
   onFitView,
+  workspaces,
+  activeTeamId,
+  wsLoading,
+  onTeamChange,
   scope,
   onScopeChange,
   adminUnlocked,
-  onAdminUnlockedChange,
+  onAdminUnlock,
+  onAdminLock,
   members,
 }: MindMapToolbarProps) {
   const { theme, toggleTheme } = useTheme();
   const [pinOpen, setPinOpen] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
 
-  const expectedPin =
-    typeof window !== "undefined"
-      ? (process.env.NEXT_PUBLIC_ADMIN_PIN ?? "1234")
-      : "1234";
+  const tryUnlock = async () => {
+    setPinError(null);
+    setUnlocking(true);
+    try {
+      const ok = await onAdminUnlock(pin);
+      if (ok) {
+        setPinOpen(false);
+      } else {
+        setPinError("Wrong PIN");
+      }
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   useEffect(() => {
     if (!pinOpen) {
@@ -307,7 +333,25 @@ export function MindMapToolbar({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+        <div className="flex items-center gap-2">
+          <span className="hidden text-xs font-medium text-[var(--muted)] sm:inline">
+            Workspace
+          </span>
+          <select
+            value={activeTeamId ?? ""}
+            onChange={(e) => onTeamChange(e.target.value)}
+            disabled={wsLoading || workspaces.length === 0}
+            className="glass-solid rounded-xl border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
+          >
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex items-center gap-2">
           <span className="hidden text-xs font-medium text-[var(--muted)] sm:inline">Scope</span>
           <ScopeDropdown
@@ -329,7 +373,7 @@ export function MindMapToolbar({
             size="icon"
             onClick={() => {
               if (adminUnlocked) {
-                onAdminUnlockedChange(false);
+                onAdminLock();
                 return;
               }
               setPinOpen((v) => !v);
@@ -352,33 +396,22 @@ export function MindMapToolbar({
                   type="password"
                   className="py-1.5 text-xs"
                   onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    if (pin === expectedPin) {
-                      onAdminUnlockedChange(true);
-                      setPinOpen(false);
-                    } else {
-                      setPinError("Wrong PIN");
-                    }
+                    if (e.key !== "Enter" || unlocking) return;
+                    void tryUnlock();
                   }}
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => {
-                    if (pin === expectedPin) {
-                      onAdminUnlockedChange(true);
-                      setPinOpen(false);
-                    } else {
-                      setPinError("Wrong PIN");
-                    }
-                  }}
+                  disabled={unlocking}
+                  onClick={() => void tryUnlock()}
                 >
-                  Unlock
+                  {unlocking ? "Unlocking…" : "Unlock"}
                 </Button>
                 {pinError && <p className="text-[11px] text-red-500 px-0.5">{pinError}</p>}
                 <p className="text-[11px] text-[var(--muted)] px-0.5">
-                  Unlock enables People + Me-only mode.
+                  Unlock enables editing, People branch, and Me-only mode.
                 </p>
               </div>
             </div>

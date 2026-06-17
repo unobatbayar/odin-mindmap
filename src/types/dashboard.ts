@@ -65,6 +65,23 @@ export interface DashboardMilestoneForecast {
   status: "on_track" | "at_risk" | "unknown";
 }
 
+export interface DashboardMemberStatusGroup {
+  label: string;
+  color: string;
+  count: number;
+  tasks: DashboardTaskSummary[];
+}
+
+export interface DashboardMemberWorkload {
+  id: number;
+  name: string;
+  profilePicture?: string | null;
+  done: number;
+  notDone: number;
+  completionPct: number;
+  byStatus: DashboardMemberStatusGroup[];
+}
+
 export interface DashboardStats {
   generatedAt: string;
   range: DashboardDateRange;
@@ -91,6 +108,7 @@ export interface DashboardStats {
     overdue: DashboardTaskSummary[];
     dueThisWeek: DashboardTaskSummary[];
   };
+  teamWorkload: DashboardMemberWorkload[];
   weeklyCompleted: { weekLabel: string; count: number }[];
   forecast: DashboardForecast;
   nextMilestoneForecast: DashboardMilestoneForecast | null;

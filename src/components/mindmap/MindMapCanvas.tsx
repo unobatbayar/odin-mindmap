@@ -19,13 +19,14 @@ import { getAncestorIds, getSubtreeNodeIds } from "@/lib/mindmap/layout";
 import { TASK_PAGE_SIZE, type TaskStatusFilter } from "@/lib/mindmap/constants";
 import { fetchWorkspaces, fetchChildren } from "@/lib/mindmap/api";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
+import { useAdminUnlocked } from "@/hooks/useAdminUnlocked";
 import { makeNodeId, parseNodeId, isTaskType, type MindMapNodeData, type NodeRecord } from "@/types/mindmap";
 import { matchesStatusFilter } from "@/lib/mindmap/statusFilter";
 
 const nodeTypes = { mindmap: MindMapNode };
 
 const LARGE_LIST_THRESHOLD = 200;
-const ADMIN_UNLOCK_KEY = "odin_admin_unlocked";
 const SCOPE_KEY = "odin_scope";
 
 function cloneSet<T>(set: Set<T>): Set<T> {
@@ -34,6 +35,8 @@ function cloneSet<T>(set: Set<T>): Set<T> {
 
 function MindMapCanvasInner() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
+  const { adminUnlocked, unlockAdmin, lockAdmin } = useAdminUnlocked();
   const [cache, setCache] = useState<Map<string, NodeRecord>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
@@ -62,26 +65,35 @@ function MindMapCanvasInner() {
       return { mode: "all" };
     }
   });
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const fitOnNextLayout = useRef(false);
   const focusAfterLayoutRef = useRef<{ nodeId: string; mode: "subtree" | "self" } | null>(null);
   const cacheRef = useRef(cache);
   cacheRef.current = cache;
 
-  useEffect(() => {
-    try {
-      setAdminUnlocked(window.localStorage.getItem(ADMIN_UNLOCK_KEY) === "1");
-    } catch {
-      // ignore
-    }
-  }, []);
+  const handleTeamChange = useCallback(
+    (teamId: string) => {
+      setTeamId(teamId);
+      setScope((prev) => {
+        if (prev.mode === "member" && prev.teamId !== teamId) {
+          const next = { mode: "all" as const };
+          try {
+            window.localStorage.setItem(SCOPE_KEY, JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        }
+        return prev;
+      });
+    },
+    [setTeamId],
+  );
 
-  const handleAdminUnlockedChange = useCallback((unlocked: boolean) => {
-    setAdminUnlocked(unlocked);
+  const handleScopeChange = useCallback((next: MindMapScope) => {
+    setScope(next);
     try {
-      if (unlocked) window.localStorage.setItem(ADMIN_UNLOCK_KEY, "1");
-      else window.localStorage.removeItem(ADMIN_UNLOCK_KEY);
+      window.localStorage.setItem(SCOPE_KEY, JSON.stringify(next));
     } catch {
       // ignore
     }
@@ -178,12 +190,18 @@ function MindMapCanvasInner() {
     let cancelled = false;
 
     async function load() {
+      if (!activeTeamId && wsLoading) return;
+
       try {
         resetGraph();
         setInitialLoading(true);
 
-        const workspaceNodes = await fetchWorkspaces();
+        const allWorkspaceNodes = await fetchWorkspaces();
         if (cancelled) return;
+
+        const workspaceNodes = activeTeamId
+          ? allWorkspaceNodes.filter((n) => parseNodeId(n.id).clickupId === activeTeamId)
+          : allWorkspaceNodes;
 
         setCache((prev) => {
           const next = new Map(prev);
@@ -200,8 +218,7 @@ function MindMapCanvasInner() {
 
         setExpandedIds(new Set(wsIds));
 
-        // Prefetch members (for the Scope dropdown) regardless of admin.
-        // Admin controls whether People branch is visible in the All graph, not whether scope is usable.
+        // Prefetch members for the Scope dropdown (selected workspace only).
         const allMembers: MemberOption[] = [];
         for (const wsId of workspaceNodes.map((n) => n.id)) {
           const { clickupId } = parseNodeId(wsId);
@@ -327,7 +344,7 @@ function MindMapCanvasInner() {
     return () => {
       cancelled = true;
     };
-  }, [scope, adminUnlocked, resetGraph]);
+  }, [scope, adminUnlocked, activeTeamId, wsLoading, resetGraph]);
 
   // Auto fit / recenter after layout changes
   useEffect(() => {
@@ -539,17 +556,15 @@ function MindMapCanvasInner() {
         onZoomIn={() => zoomIn({ duration: 200 })}
         onZoomOut={() => zoomOut({ duration: 200 })}
         onFitView={() => fitView({ padding: 0.2, duration: 300 })}
+        workspaces={workspaces}
+        activeTeamId={activeTeamId}
+        wsLoading={wsLoading}
+        onTeamChange={handleTeamChange}
         scope={scope}
-        onScopeChange={(next) => {
-          setScope(next);
-          try {
-            window.localStorage.setItem(SCOPE_KEY, JSON.stringify(next));
-          } catch {
-            // ignore
-          }
-        }}
+        onScopeChange={handleScopeChange}
         adminUnlocked={adminUnlocked}
-        onAdminUnlockedChange={handleAdminUnlockedChange}
+        onAdminUnlock={unlockAdmin}
+        onAdminLock={() => void lockAdmin()}
         members={members}
       />
 
@@ -607,6 +622,7 @@ function MindMapCanvasInner() {
         {selectedNode && (
           <NodeDetailPanel
             node={selectedNode}
+            readOnly={!adminUnlocked}
             onClose={() => setSelectedId(null)}
             onUpdate={handleNodeUpdate}
           />

@@ -5,6 +5,7 @@ import { ForecastTimeline } from "./ForecastTimeline";
 import { GoalsSection } from "./GoalsSection";
 import { KpiGrid } from "./KpiGrid";
 import { MilestoneSection } from "./MilestoneSection";
+import { TeamWorkloadSection } from "./TeamWorkloadSection";
 import type { DashboardStats } from "@/types/dashboard";
 
 interface DashboardGridProps {
@@ -51,6 +52,7 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
           <GoalsSection goals={stats.goals} />
         )}
       </div>
+      <TeamWorkloadSection teamWorkload={stats.teamWorkload} />
       <ActivitySection
         recentActivity={stats.recentActivity}
         weeklyCompleted={stats.weeklyCompleted}
