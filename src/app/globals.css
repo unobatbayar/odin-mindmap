@@ -7,32 +7,41 @@
   --foreground: #18181b;
   --panel: rgba(255, 255, 255, 0.72);
   --panel-solid: #ffffff;
-  --border: rgba(0, 0, 0, 0.06);
-  --border-strong: rgba(0, 0, 0, 0.1);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
   --muted: #71717a;
   --accent: #6366f1;
   --accent-end: #a855f7;
   --accent-glow: rgba(99, 102, 241, 0.35);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-tint: rgba(255, 255, 255, 0.55);
   --surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
   --surface-shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
   --dot-color: rgba(99, 102, 241, 0.12);
 }
 
 .dark {
-  --background: #09090f;
-  --foreground: #fafafa;
-  --panel: rgba(24, 24, 32, 0.75);
-  /* Slightly brighter panels + stronger borders for readability */
-  --panel-solid: #1f1f2a;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --muted: #a1a1aa;
+  --background: #07070d;
+  --foreground: #f4f4f5;
+  --panel: rgba(36, 36, 50, 0.62);
+  --panel-solid: rgba(44, 44, 60, 0.94);
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --muted: #b0b0bb;
   --accent: #818cf8;
   --accent-end: #c084fc;
-  --accent-glow: rgba(129, 140, 248, 0.25);
-  --surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 6px 20px rgba(0, 0, 0, 0.35);
-  --surface-shadow-lg: 0 10px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.07);
-  --dot-color: rgba(129, 140, 248, 0.12);
+  --accent-glow: rgba(129, 140, 248, 0.35);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
+  --glass-tint: rgba(255, 255, 255, 0.05);
+  --surface-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --surface-shadow-lg:
+    0 14px 44px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --dot-color: rgba(129, 140, 248, 0.18);
 }
 
 body {
@@ -50,8 +59,9 @@ body {
 
 .dark .canvas-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99, 102, 241, 0.12), transparent),
-    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(168, 85, 247, 0.08), transparent),
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99, 102, 241, 0.16), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(168, 85, 247, 0.12), transparent),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99, 102, 241, 0.04), transparent),
     var(--background);
 }
 
@@ -63,17 +73,44 @@ body {
   background-clip: text;
 }
 
-/* Glass surfaces */
+/* Glass surfaces — frosted Apple-style panels */
 .glass {
-  background: var(--panel);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  background:
+    linear-gradient(180deg, var(--glass-highlight) 0%, transparent 42%),
+    var(--panel);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--surface-shadow);
 }
 
 .glass-strong {
-  background: var(--panel);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  background:
+    linear-gradient(
+      145deg,
+      var(--glass-highlight) 0%,
+      var(--glass-tint) 38%,
+      transparent 72%
+    ),
+    var(--panel);
+  backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  box-shadow: var(--surface-shadow-lg);
+}
+
+.glass-solid {
+  background:
+    linear-gradient(180deg, var(--glass-highlight) 0%, transparent 48%),
+    var(--panel-solid);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow: var(--surface-shadow);
+}
+
+.glass-inset {
+  background: color-mix(in srgb, var(--panel-solid) 72%, transparent);
+  backdrop-filter: blur(12px) saturate(1.6);
+  -webkit-backdrop-filter: blur(12px) saturate(1.6);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 /* Accent gradient button */
@@ -97,6 +134,10 @@ body {
   stroke: var(--border-strong);
   stroke-width: 1.5;
   transition: stroke 0.3s, stroke-width 0.3s;
+}
+
+.dark .react-flow__edge-path {
+  stroke: rgba(255, 255, 255, 0.28);
 }
 
 .react-flow__edge-path.path-highlight {

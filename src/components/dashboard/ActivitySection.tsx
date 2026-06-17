@@ -42,7 +42,7 @@ function WeeklySparkline({
   const max = Math.max(...data.map((d) => d.count), 1);
 
   return (
-    <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--panel-solid)]/50 p-4">
+    <div className="mt-4 glass-inset rounded-xl border border-[var(--border-strong)] p-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
         Tasks completed per week
       </p>

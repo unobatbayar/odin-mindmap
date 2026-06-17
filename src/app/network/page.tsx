@@ -68,7 +68,7 @@ export default function NetworkPage() {
               value={activeTeamId ?? ""}
               onChange={(e) => setTeamId(e.target.value)}
               disabled={wsLoading || workspaces.length === 0}
-              className="rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
+              className="glass-solid rounded-xl border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
             >
               {workspaces.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -78,7 +78,7 @@ export default function NetworkPage() {
             </select>
           </div>
 
-          <div className="flex rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-0.5">
+          <div className="glass-solid flex rounded-xl border border-[var(--border-strong)] p-0.5">
             {(["people", "projects"] as const).map((mode) => (
               <button
                 key={mode}

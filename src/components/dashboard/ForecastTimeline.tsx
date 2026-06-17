@@ -130,7 +130,7 @@ function RemainingBars({ data }: { data: BurndownData }) {
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--panel-solid)]/40 p-4">
+    <div className="mt-3 rounded-xl border border-[var(--border-strong)] glass-inset p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
           Remaining over time
@@ -264,7 +264,7 @@ export function ForecastTimeline({
 
 function MetricPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--panel-solid)]/50 px-3 py-2">
+    <div className="glass-inset rounded-xl border border-[var(--border)] px-3 py-2">
       <p className="text-[9px] font-semibold uppercase tracking-wider text-[var(--muted)]">
         {label}
       </p>

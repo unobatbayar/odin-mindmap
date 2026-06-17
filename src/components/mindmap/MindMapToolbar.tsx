@@ -129,7 +129,7 @@ function ScopeDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] py-1.5 pl-2.5 pr-2 text-xs font-medium text-zinc-700 shadow-sm transition-colors hover:bg-black/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.04]"
+        className="glass-solid flex items-center gap-2 rounded-xl border border-[var(--border-strong)] py-1.5 pl-2.5 pr-2 text-xs font-medium text-zinc-700 shadow-sm transition-colors hover:bg-black/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
         title="Scope"
       >
         {scope.mode === "member" ? (
@@ -157,7 +157,7 @@ function ScopeDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-[280px] overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-2 shadow-surface-lg">
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-[280px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
           <div className="px-1 pb-2">
             <Input
               value={query}
@@ -340,7 +340,7 @@ export function MindMapToolbar({
           </Button>
 
           {pinOpen && !adminUnlocked && (
-            <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-2 shadow-surface-lg">
+            <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
               <p className="px-1 pb-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
                 Enter admin PIN
               </p>

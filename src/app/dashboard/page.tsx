@@ -153,7 +153,7 @@ export default function DashboardPage() {
               value={activeTeamId ?? ""}
               onChange={(e) => handleTeamChange(e.target.value)}
               disabled={wsLoading || workspaces.length === 0}
-              className="rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
+              className="glass-solid rounded-xl border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
             >
               {workspaces.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
               value={listId ?? ""}
               onChange={(e) => setListId(e.target.value || null)}
               disabled={!activeTeamId || projects.length === 0}
-              className="max-w-[10rem] rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200 sm:max-w-[14rem]"
+              className="glass-solid max-w-[10rem] rounded-xl border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200 sm:max-w-[14rem]"
             >
               <option value="">All projects</option>
               {projects.map((p) => (
@@ -182,7 +182,7 @@ export default function DashboardPage() {
             </select>
           </div>
 
-          <div className="flex rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-0.5">
+          <div className="glass-solid flex rounded-xl border border-[var(--border-strong)] p-0.5">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}

@@ -29,7 +29,7 @@ function ProjectNodeComponent({ id, data }: NodeProps) {
         className={`rounded-xl border px-2.5 py-1.5 shadow-surface transition-all duration-150 ${
           highlighted || focused
             ? "border-indigo-400/60 bg-indigo-50/90 ring-2 ring-indigo-500/40 dark:border-indigo-500/40 dark:bg-indigo-950/50"
-            : "border-[var(--border-strong)] bg-[var(--panel-solid)]"
+            : "glass-solid border-[var(--border-strong)]"
         }`}
       >
         <p

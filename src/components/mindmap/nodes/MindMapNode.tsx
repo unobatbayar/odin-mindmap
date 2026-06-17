@@ -104,8 +104,8 @@ function MindMapNodeComponent({ data }: NodeProps) {
       <Handle type="target" position={Position.Left} className={handleClass} />
       <div
         className={`
-          ${width} group/node rounded-xl border bg-[var(--panel-solid)] shadow-surface
-          backdrop-blur-sm transition-all duration-200
+          ${width} group/node glass-strong rounded-xl border shadow-surface
+          transition-all duration-200
           hover:shadow-surface-lg hover:-translate-y-px
           ${node.isSelected ? "ring-2 ring-[var(--accent)]/50 shadow-surface-lg" : ""}
           ${node.isOnPath && !node.isSelected ? "border-[var(--accent)]/30" : "border-[var(--border)]"}

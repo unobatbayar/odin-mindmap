@@ -63,7 +63,7 @@ export function StatusFilterDropdown({ value, onChange }: StatusFilterDropdownPr
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] py-1.5 pl-2.5 pr-2 text-xs font-medium text-zinc-700 shadow-sm transition-colors hover:bg-black/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.04]"
+        className="glass-solid flex items-center gap-2 rounded-xl border border-[var(--border-strong)] py-1.5 pl-2.5 pr-2 text-xs font-medium text-zinc-700 shadow-sm transition-colors hover:bg-black/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
       >
         <StatusIcon filter={value} color={current.color} />
         <span>{current.label}</span>
@@ -82,7 +82,7 @@ export function StatusFilterDropdown({ value, onChange }: StatusFilterDropdownPr
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[168px] overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-1 shadow-surface-lg">
+        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[168px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-1 shadow-surface-lg">
           {STATUS_FILTER_OPTIONS.map((opt) => {
             const selected = opt.value === value;
             return (

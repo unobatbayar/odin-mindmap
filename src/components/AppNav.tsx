@@ -18,7 +18,7 @@ export function AppNav() {
   const isDashboard = pathname.startsWith("/dashboard");
 
   return (
-    <nav className="flex items-center gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-0.5">
+    <nav className="glass-solid flex items-center gap-0.5 rounded-xl border border-[var(--border-strong)] p-0.5">
       <Link href="/" className={tabClass(isMindmap)}>
         Mindmap
       </Link>
