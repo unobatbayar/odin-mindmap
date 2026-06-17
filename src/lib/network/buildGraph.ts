@@ -3,6 +3,19 @@ import { getTasksForAssignee } from "@/lib/clickup/tasks";
 import { mapWithConcurrency } from "@/lib/utils/concurrency";
 import type { NetworkEdge, NetworkGraph, NetworkNode } from "@/types/network";
 
+function isGenericListName(name: string | null | undefined): boolean {
+  const n = (name ?? "").trim().toLowerCase();
+  return n === "list";
+}
+
+function resolveProjectLabel(task: { list?: { name: string }; folder?: { name: string } }): string {
+  const listName = task.list?.name ?? "List";
+  if (!isGenericListName(listName)) return listName;
+  const folderName = task.folder?.name?.trim();
+  if (folderName && folderName.toLowerCase() !== "hidden") return folderName;
+  return "List";
+}
+
 function personId(userId: string) {
   return `person:${userId}`;
 }
@@ -52,7 +65,7 @@ export async function buildNetworkGraph(teamId: string): Promise<NetworkGraph> {
           projectNodes.set(pid, {
             id: pid,
             type: "project",
-            label: task.list!.name,
+            label: resolveProjectLabel(task),
             meta: { taskCount: 0 },
           });
         }

@@ -6,17 +6,15 @@ import { TabPageShell } from "@/components/layout/TabPageShell";
 import { TabSkeleton } from "@/components/layout/TabSkeleton";
 import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
 import { fetchActivityStats } from "@/lib/activity/api";
-import type { DashboardDateRange, DashboardProject } from "@/types/dashboard";
+import type { DashboardProject } from "@/types/dashboard";
 import type { ActivityStats } from "@/types/activity";
 
 function ActivityContent({
   teamId,
-  range,
   listId,
   onProjectsLoaded,
 }: {
   teamId: string;
-  range: DashboardDateRange;
   listId: string | null;
   onProjectsLoaded: (projects: DashboardProject[]) => void;
 }) {
@@ -29,7 +27,7 @@ function ActivityContent({
     setLoading(true);
     setError(null);
 
-    fetchActivityStats(teamId, range, listId)
+    fetchActivityStats(teamId, "30d", listId)
       .then((data) => {
         if (!cancelled) {
           setStats(data);
@@ -49,7 +47,7 @@ function ActivityContent({
     return () => {
       cancelled = true;
     };
-  }, [teamId, range, listId, onProjectsLoaded]);
+  }, [teamId, listId, onProjectsLoaded]);
 
   if (loading) return <TabSkeleton />;
   if (error) {
@@ -65,7 +63,6 @@ function ActivityContent({
 
 export default function ActivityPage() {
   const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
-  const [range, setRange] = useState<DashboardDateRange>("30d");
   const [listId, setListId] = useState<string | null>(null);
   const [projects, setProjects] = useState<DashboardProject[]>([]);
 
@@ -89,13 +86,9 @@ export default function ActivityPage() {
       projects={projects}
       listId={listId}
       onListIdChange={setListId}
-      showRangeFilter
-      range={range}
-      onRangeChange={setRange}
     >
       <ActivityContent
         teamId={activeTeamId!}
-        range={range}
         listId={listId}
         onProjectsLoaded={onProjectsLoaded}
       />

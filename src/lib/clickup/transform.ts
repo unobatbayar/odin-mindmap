@@ -11,6 +11,29 @@ function parseCount(count: string | number | null | undefined): number | undefin
   return isNaN(n) ? undefined : n;
 }
 
+function isGenericListName(name: string | null | undefined): boolean {
+  const n = (name ?? "").trim().toLowerCase();
+  return n === "list";
+}
+
+function resolveListLabel(list: ClickUpList): string {
+  // ClickUp sometimes returns very generic list names like "List".
+  // Prefer the parent project container name unless it's explicitly hidden.
+  if (!isGenericListName(list.name)) return list.name;
+
+  const folder = list.folder;
+  if (folder) {
+    const folderName = folder.name?.trim();
+    const isHidden = folder.hidden === true || folderName?.toLowerCase() === "hidden";
+    if (!isHidden && folderName) return folderName;
+  }
+
+  const spaceName = list.space?.name?.trim();
+  if (spaceName) return spaceName;
+
+  return "List";
+}
+
 export function workspaceToNode(team: ClickUpTeam): NodeRecord {
   const id = makeNodeId("workspace", team.id);
   return {
@@ -67,7 +90,7 @@ export function listToNode(list: ClickUpList, parentId: string): NodeRecord {
       type: "list",
       clickupId: list.id,
       parentId,
-      label: list.name,
+      label: resolveListLabel(list),
       hasChildren: true,
       childrenLoaded: false,
       childCount,
