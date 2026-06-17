@@ -1,27 +1,7 @@
 import { getMembers } from "@/lib/clickup/members";
 import { getTasksForAssignee } from "@/lib/clickup/tasks";
+import { mapWithConcurrency } from "@/lib/utils/concurrency";
 import type { NetworkEdge, NetworkGraph, NetworkNode } from "@/types/network";
-
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let index = 0;
-
-  async function worker() {
-    while (index < items.length) {
-      const i = index++;
-      results[i] = await fn(items[i]);
-    }
-  }
-
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, () => worker()),
-  );
-  return results;
-}
 
 function personId(userId: string) {
   return `person:${userId}`;

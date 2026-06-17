@@ -15,6 +15,7 @@ export function AppNav() {
   const pathname = usePathname();
   const isMindmap = pathname === "/";
   const isNetwork = pathname.startsWith("/network");
+  const isDashboard = pathname.startsWith("/dashboard");
 
   return (
     <nav className="flex items-center gap-0.5 rounded-xl border border-[var(--border-strong)] bg-[var(--panel-solid)] p-0.5">
@@ -23,6 +24,9 @@ export function AppNav() {
       </Link>
       <Link href="/network" className={tabClass(isNetwork)}>
         Network
+      </Link>
+      <Link href="/dashboard" className={tabClass(isDashboard)}>
+        Dashboard
       </Link>
     </nav>
   );

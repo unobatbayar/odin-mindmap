@@ -26,7 +26,6 @@ import { NetworkDetailPanel } from "./NetworkDetailPanel";
 import { NetworkInteractionProvider } from "./NetworkInteractionContext";
 import { fetchNetworkGraph } from "@/lib/network/api";
 import { layoutNetworkNodes } from "@/lib/network/layout";
-import { fetchWorkspaces } from "@/lib/mindmap/api";
 import type {
   NetworkEdge as NetworkEdgeType,
   NetworkGraph,
@@ -351,20 +350,4 @@ export function NetworkCanvas(props: NetworkCanvasProps) {
   );
 }
 
-export function useNetworkWorkspaces() {
-  const [workspaces, setWorkspaces] = useState<{ id: string; label: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchWorkspaces()
-      .then((nodes) => {
-        setWorkspaces(
-          nodes.map((n) => ({ id: n.data.clickupId, label: n.data.label })),
-        );
-      })
-      .catch(() => setWorkspaces([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { workspaces, loading };
-}
+export { useWorkspaces as useNetworkWorkspaces } from "@/hooks/useWorkspaces";

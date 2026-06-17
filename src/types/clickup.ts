@@ -62,12 +62,47 @@ export interface ClickUpTask {
   priority?: ClickUpPriority | null;
   due_date?: string | null;
   start_date?: string | null;
+  date_updated?: string | null;
+  date_closed?: string | null;
+  date_done?: string | null;
+  custom_item_id?: number | null;
   parent?: string | null;
   url: string;
   assignees: ClickUpUser[];
   list?: { id: string; name: string };
   folder?: { id: string; name: string };
   space?: { id: string };
+}
+
+export interface ClickUpKeyResult {
+  id: string;
+  name: string;
+  type: string;
+  unit?: string;
+  steps_start?: number;
+  steps_end?: number;
+  steps_current?: number | null;
+  percent_completed?: number;
+}
+
+export interface ClickUpGoal {
+  id: string;
+  name: string;
+  team_id: string;
+  percent_completed: number;
+  archived?: boolean;
+  key_result_count?: number;
+  key_results?: ClickUpKeyResult[];
+  pretty_url?: string;
+}
+
+export interface ClickUpGoalsResponse {
+  goals: ClickUpGoal[];
+  folders?: { goals: ClickUpGoal[] }[];
+}
+
+export interface ClickUpGoalResponse {
+  goal: ClickUpGoal;
 }
 
 export interface ClickUpTeamsResponse {
