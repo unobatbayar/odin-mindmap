@@ -28,7 +28,6 @@ interface MindMapToolbarProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitView: () => void;
-  onCenterSelected: () => void;
   scope: MindMapScope;
   onScopeChange: (scope: MindMapScope) => void;
   adminUnlocked: boolean;
@@ -60,15 +59,6 @@ function IconFit() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 5V2h3M11 2h3v3M14 11v3h-3M5 14H2v-3" />
-    </svg>
-  );
-}
-
-function IconCenter() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-      <circle cx="8" cy="8" r="2" />
-      <path d="M8 1v2M8 13v2M1 8h2M13 8h2" />
     </svg>
   );
 }
@@ -260,7 +250,6 @@ export function MindMapToolbar({
   onZoomIn,
   onZoomOut,
   onFitView,
-  onCenterSelected,
   scope,
   onScopeChange,
   adminUnlocked,
@@ -405,9 +394,6 @@ export function MindMapToolbar({
         <div className="mx-1 h-4 w-px bg-[var(--border-strong)]" />
         <Button variant="ghost" size="icon" onClick={onFitView} title="Fit view (0)">
           <IconFit />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onCenterSelected} title="Center selected (f)">
-          <IconCenter />
         </Button>
         <div className="mx-1 h-4 w-px bg-[var(--border-strong)]" />
         <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">

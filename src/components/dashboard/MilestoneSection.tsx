@@ -1,6 +1,9 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import type { DashboardMilestone } from "@/types/dashboard";
+import type {
+  DashboardMilestone,
+  DashboardMilestoneForecast,
+} from "@/types/dashboard";
 
 const GROUP_LABELS: Record<DashboardMilestone["group"], string> = {
   upcoming: "Upcoming",
@@ -26,11 +29,33 @@ function formatDueDate(ts?: string | null): string {
   });
 }
 
+const MILESTONE_STATUS_LABELS: Record<
+  DashboardMilestoneForecast["status"],
+  { label: string; className: string }
+> = {
+  on_track: {
+    label: "On track",
+    className: "text-emerald-600 dark:text-emerald-400",
+  },
+  at_risk: {
+    label: "At risk",
+    className: "text-amber-600 dark:text-amber-400",
+  },
+  unknown: {
+    label: "Unknown",
+    className: "text-[var(--muted)]",
+  },
+};
+
 interface MilestoneSectionProps {
   milestones: DashboardMilestone[];
+  nextMilestoneForecast?: DashboardMilestoneForecast | null;
 }
 
-export function MilestoneSection({ milestones }: MilestoneSectionProps) {
+export function MilestoneSection({
+  milestones,
+  nextMilestoneForecast,
+}: MilestoneSectionProps) {
   if (milestones.length === 0) {
     return (
       <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
@@ -49,11 +74,30 @@ export function MilestoneSection({ milestones }: MilestoneSectionProps) {
     items: milestones.filter((m) => m.group === group),
   })).filter((g) => g.items.length > 0);
 
+  const statusInfo = nextMilestoneForecast
+    ? MILESTONE_STATUS_LABELS[nextMilestoneForecast.status]
+    : null;
+
   return (
     <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
       <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
         Milestones
       </h2>
+      {nextMilestoneForecast && statusInfo && (
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          Next milestone:{" "}
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            {nextMilestoneForecast.milestoneName}
+          </span>
+          {nextMilestoneForecast.dueDate && (
+            <> · due {formatDueDate(nextMilestoneForecast.dueDate)}</>
+          )}
+          {" · "}
+          <span className={`font-semibold ${statusInfo.className}`}>
+            {statusInfo.label}
+          </span>
+        </p>
+      )}
       <div className="mt-4 space-y-5">
         {grouped.map(({ group, items }) => (
           <div key={group}>

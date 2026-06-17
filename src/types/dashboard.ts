@@ -48,6 +48,22 @@ export interface DashboardGoal {
   keyResults: DashboardGoalKeyResult[];
 }
 
+export interface DashboardForecast {
+  remaining: number;
+  velocityPerWeek: number | null;
+  estimatedCompletion: string | null;
+  confidence: "high" | "low" | "none";
+  weeksRemaining: number | null;
+  velocityWindowWeeks: number;
+}
+
+export interface DashboardMilestoneForecast {
+  milestoneId: string;
+  milestoneName: string;
+  dueDate: string | null;
+  status: "on_track" | "at_risk" | "unknown";
+}
+
 export interface DashboardStats {
   generatedAt: string;
   range: DashboardDateRange;
@@ -71,4 +87,6 @@ export interface DashboardStats {
     completed: DashboardTaskSummary[];
   };
   weeklyCompleted: { weekLabel: string; count: number }[];
+  forecast: DashboardForecast;
+  nextMilestoneForecast: DashboardMilestoneForecast | null;
 }

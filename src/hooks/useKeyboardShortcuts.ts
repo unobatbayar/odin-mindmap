@@ -8,7 +8,6 @@ interface KeyboardActions {
   onFitView: () => void;
   onDeselect: () => void;
   onToggleExpand: () => void;
-  onCenterSelected: () => void;
 }
 
 export function useKeyboardShortcuts(actions: KeyboardActions) {
@@ -44,10 +43,6 @@ export function useKeyboardShortcuts(actions: KeyboardActions) {
         case "Enter":
           e.preventDefault();
           actions.onToggleExpand();
-          break;
-        case "f":
-          e.preventDefault();
-          actions.onCenterSelected();
           break;
       }
     },

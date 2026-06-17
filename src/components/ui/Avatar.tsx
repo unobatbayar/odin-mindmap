@@ -1,11 +1,12 @@
 interface AvatarProps {
-  name: string;
+  name?: string | null;
   src?: string | null;
   size?: number;
 }
 
 export function Avatar({ name, src, size = 24 }: AvatarProps) {
-  const initials = name
+  const displayName = name?.trim() || "?";
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -18,7 +19,7 @@ export function Avatar({ name, src, size = 24 }: AvatarProps) {
     return (
       <img
         src={src}
-        alt={name}
+        alt={displayName}
         width={size}
         height={size}
         className={`rounded-full ${ringClass} object-cover`}

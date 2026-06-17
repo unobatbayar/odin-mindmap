@@ -15,6 +15,17 @@ export async function fetchDashboardStats(
   return res.json();
 }
 
+export function formatDate(isoOrMs: string): string {
+  const ms = Number(isoOrMs);
+  const d = Number.isFinite(ms) && ms > 1e10 ? new Date(ms) : new Date(isoOrMs);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function formatRelativeTime(isoOrMs: string): string {
   const ms = Number(isoOrMs);
   if (!Number.isFinite(ms) || ms <= 0) return "—";

@@ -33,7 +33,7 @@ function cloneSet<T>(set: Set<T>): Set<T> {
 }
 
 function MindMapCanvasInner() {
-  const { zoomIn, zoomOut, fitView, setCenter } = useReactFlow();
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
   const [cache, setCache] = useState<Map<string, NodeRecord>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
@@ -509,13 +509,6 @@ function MindMapCanvasInner() {
     [toggleExpand],
   );
 
-  const centerSelected = useCallback(() => {
-    if (!selectedId) return;
-    const node = nodes.find((n) => n.id === selectedId);
-    if (!node) return;
-    setCenter(node.position.x + 110, node.position.y + 36, { zoom: 1.2, duration: 300 });
-  }, [selectedId, nodes, setCenter]);
-
   useKeyboardShortcuts({
     onZoomIn: () => zoomIn({ duration: 200 }),
     onZoomOut: () => zoomOut({ duration: 200 }),
@@ -524,7 +517,6 @@ function MindMapCanvasInner() {
     onToggleExpand: () => {
       if (selectedId) toggleExpand(selectedId);
     },
-    onCenterSelected: centerSelected,
   });
 
   const handleNodeUpdate = useCallback((nodeId: string, data: MindMapNodeData) => {
@@ -547,7 +539,6 @@ function MindMapCanvasInner() {
         onZoomIn={() => zoomIn({ duration: 200 })}
         onZoomOut={() => zoomOut({ duration: 200 })}
         onFitView={() => fitView({ padding: 0.2, duration: 300 })}
-        onCenterSelected={centerSelected}
         scope={scope}
         onScopeChange={(next) => {
           setScope(next);

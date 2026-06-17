@@ -5,8 +5,10 @@ import { mapWithConcurrency } from "@/lib/utils/concurrency";
 import type {
   DashboardAssignee,
   DashboardDateRange,
+  DashboardForecast,
   DashboardGoal,
   DashboardMilestone,
+  DashboardMilestoneForecast,
   DashboardProject,
   DashboardStats,
   DashboardTaskSummary,
@@ -15,9 +17,13 @@ import type { ClickUpTask, ClickUpUser } from "@/types/clickup";
 
 const CONCURRENCY = 6;
 const RECENT_LIMIT = 15;
+const VELOCITY_WINDOW_WEEKS = 4;
+const MILESTONE_GRACE_MS = 3 * 86_400_000;
 
 // KPI totals use all-time task data; recent activity sections respect ?range=.
 // Optional ?listId= filters all task-derived sections to one ClickUp list (project).
+// Forecast: velocity from last 4 weeks of completions (not completion rate);
+// ETA = (open + inProgress) / velocity — task-count based, not story points.
 export async function buildDashboardStats(
   teamId: string,
   range: DashboardDateRange = "30d",
@@ -126,6 +132,9 @@ export async function buildDashboardStats(
 
   const weeklyCompleted = buildWeeklyCompleted(tasks, now);
 
+  const forecast = buildForecast(open, inProgress, weeklyCompleted, now);
+  const nextMilestoneForecast = buildMilestoneForecast(milestones, forecast);
+
   return {
     generatedAt: new Date().toISOString(),
     range,
@@ -149,6 +158,112 @@ export async function buildDashboardStats(
       completed: recentCompleted,
     },
     weeklyCompleted,
+    forecast,
+    nextMilestoneForecast,
+  };
+}
+
+function buildForecast(
+  open: number,
+  inProgress: number,
+  weeklyCompleted: { count: number }[],
+  now: number,
+): DashboardForecast {
+  const remaining = open + inProgress;
+  const rates = weeklyCompleted.map((w) => w.count);
+  const nonZeroRates = rates.filter((c) => c > 0);
+  const velocity =
+    nonZeroRates.length > 0
+      ? nonZeroRates.reduce((a, b) => a + b, 0) / nonZeroRates.length
+      : null;
+
+  if (remaining <= 0) {
+    return {
+      remaining: 0,
+      velocityPerWeek: velocity,
+      estimatedCompletion: new Date(now).toISOString(),
+      confidence: "high",
+      weeksRemaining: 0,
+      velocityWindowWeeks: VELOCITY_WINDOW_WEEKS,
+    };
+  }
+
+  if (velocity === null || velocity <= 0) {
+    return {
+      remaining,
+      velocityPerWeek: null,
+      estimatedCompletion: null,
+      confidence: "none",
+      weeksRemaining: null,
+      velocityWindowWeeks: VELOCITY_WINDOW_WEEKS,
+    };
+  }
+
+  const weeksRemaining = remaining / velocity;
+  const estimatedCompletion = new Date(
+    now + weeksRemaining * 7 * 86_400_000,
+  ).toISOString();
+
+  let confidence: DashboardForecast["confidence"] = "high";
+  if (nonZeroRates.length < 2) {
+    confidence = "low";
+  } else {
+    const min = Math.min(...nonZeroRates);
+    const max = Math.max(...nonZeroRates);
+    if (min > 0 && max / min > 3) confidence = "low";
+  }
+
+  return {
+    remaining,
+    velocityPerWeek: Math.round(velocity * 10) / 10,
+    estimatedCompletion,
+    confidence,
+    weeksRemaining: Math.round(weeksRemaining * 10) / 10,
+    velocityWindowWeeks: VELOCITY_WINDOW_WEEKS,
+  };
+}
+
+function buildMilestoneForecast(
+  milestones: DashboardMilestone[],
+  forecast: DashboardForecast,
+): DashboardMilestoneForecast | null {
+  const active = milestones.filter((m) => m.group !== "completed");
+  const preferred = active.filter(
+    (m) =>
+      (m.group === "in_progress" || m.group === "upcoming") && m.dueDate,
+  );
+  const pool =
+    preferred.length > 0
+      ? preferred
+      : active.filter((m) => m.dueDate);
+
+  if (pool.length === 0) return null;
+
+  const next = [...pool].sort(
+    (a, b) =>
+      (parseTimestamp(a.dueDate) ?? Infinity) -
+      (parseTimestamp(b.dueDate) ?? Infinity),
+  )[0];
+
+  const dueMs = parseTimestamp(next.dueDate);
+  const etaMs = forecast.estimatedCompletion
+    ? new Date(forecast.estimatedCompletion).getTime()
+    : null;
+
+  let status: DashboardMilestoneForecast["status"];
+  if (!dueMs || !etaMs) {
+    status = "unknown";
+  } else if (etaMs <= dueMs + MILESTONE_GRACE_MS) {
+    status = "on_track";
+  } else {
+    status = "at_risk";
+  }
+
+  return {
+    milestoneId: next.id,
+    milestoneName: next.name,
+    dueDate: next.dueDate ?? null,
+    status,
   };
 }
 

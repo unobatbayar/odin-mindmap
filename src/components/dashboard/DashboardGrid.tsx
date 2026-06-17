@@ -1,6 +1,7 @@
 "use client";
 
 import { ActivitySection } from "./ActivitySection";
+import { ForecastTimeline } from "./ForecastTimeline";
 import { GoalsSection } from "./GoalsSection";
 import { KpiGrid } from "./KpiGrid";
 import { MilestoneSection } from "./MilestoneSection";
@@ -27,8 +28,16 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
         </p>
       )}
       <KpiGrid totals={stats.totals} />
+      <ForecastTimeline
+        forecast={stats.forecast}
+        weeklyCompleted={stats.weeklyCompleted}
+        milestoneForecast={stats.nextMilestoneForecast}
+      />
       <div className="grid gap-6 lg:grid-cols-2">
-        <MilestoneSection milestones={stats.milestones} />
+        <MilestoneSection
+          milestones={stats.milestones}
+          nextMilestoneForecast={stats.nextMilestoneForecast}
+        />
         {stats.listId ? (
           <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
             <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">

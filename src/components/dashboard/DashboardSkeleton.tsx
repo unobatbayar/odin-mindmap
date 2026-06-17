@@ -13,6 +13,11 @@ export function DashboardSkeleton() {
           </div>
         ))}
       </div>
+      <div className="glass-strong h-44 rounded-2xl border border-[var(--border)] p-5 shadow-surface">
+        <div className="loading-shimmer h-4 w-32 rounded" />
+        <div className="loading-shimmer mt-3 h-4 max-w-lg rounded" />
+        <div className="loading-shimmer mt-6 h-10 rounded-xl" />
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="glass-strong h-64 rounded-2xl border border-[var(--border)] p-5 shadow-surface">
           <div className="loading-shimmer h-4 w-24 rounded" />
