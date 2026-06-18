@@ -49,6 +49,14 @@ body {
   color: var(--foreground);
 }
 
+.safe-top {
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+}
+
 /* Ambient canvas glow */
 .canvas-bg {
   background:

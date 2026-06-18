@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { AppNav } from "@/components/AppNav";
+import { AppLogo, headerSelectClass } from "@/components/layout/AppHeader";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { StatusFilterDropdown } from "./StatusFilterDropdown";
 import type { TaskStatusFilter } from "@/lib/mindmap/constants";
@@ -300,49 +301,31 @@ export function MindMapToolbar({
   }, [pinOpen]);
 
   return (
-    <header className="glass relative z-50 flex h-14 shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5">
-      <div className="flex min-w-0 items-center gap-3.5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 shadow-sm">
-            <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="3" fill="white" />
-              <circle cx="8" cy="10" r="2" fill="white" fillOpacity="0.85" />
-              <circle cx="24" cy="10" r="2" fill="white" fillOpacity="0.85" />
-              <circle cx="8" cy="22" r="2" fill="white" fillOpacity="0.85" />
-              <circle cx="24" cy="22" r="2" fill="white" fillOpacity="0.85" />
-              <path d="M13 14L9 11M19 14L23 11M13 18L9 21M19 18L23 21" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <h1 className="shrink-0 text-sm font-bold tracking-tight text-gradient">
-            Odin Mindmap
-          </h1>
-        </div>
-
-        <div className="hidden h-4 w-px bg-[var(--border-strong)] sm:block" />
-        <AppNav />
+    <header className="safe-top glass relative z-50 shrink-0 overflow-x-hidden border-b border-[var(--border)] px-4 py-2.5 sm:px-5 sm:py-3 lg:px-6 lg:py-2.5">
+      {/* Mobile */}
+      <div className="flex flex-col gap-2.5 lg:hidden">
+        <AppLogo compact />
 
         {breadcrumbs.length > 0 && (
-          <nav className="hidden min-w-0 items-center gap-1 text-xs text-[var(--muted)] sm:flex">
+          <nav className="flex min-w-0 items-center gap-1 text-xs text-[var(--muted)]">
             {breadcrumbs.map((crumb, i) => (
-              <span key={crumb.id} className="flex items-center gap-1 min-w-0">
+              <span key={crumb.id} className="flex min-w-0 items-center gap-1">
                 {i > 0 && <span className="text-[var(--border-strong)]">/</span>}
-                <span className="truncate max-w-[120px] font-medium">{crumb.data.label}</span>
+                <span className="max-w-[140px] truncate font-medium">{crumb.data.label}</span>
               </span>
             ))}
           </nav>
         )}
-      </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-        <div className="flex items-center gap-2">
-          <span className="hidden text-xs font-medium text-[var(--muted)] sm:inline">
-            Workspace
-          </span>
+        <div className="flex flex-col gap-2">
+          <AppNav />
+
           <select
             value={activeTeamId ?? ""}
             onChange={(e) => onTeamChange(e.target.value)}
             disabled={wsLoading || workspaces.length === 0}
-            className="glass-solid rounded-xl border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm dark:text-zinc-200"
+            className={headerSelectClass}
+            aria-label="Workspace"
           >
             {workspaces.map((w) => (
               <option key={w.id} value={w.id}>
@@ -350,88 +333,185 @@ export function MindMapToolbar({
               </option>
             ))}
           </select>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <span className="hidden text-xs font-medium text-[var(--muted)] sm:inline">Scope</span>
-          <ScopeDropdown
-            scope={scope}
-            onChange={onScopeChange}
-            members={members}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="hidden text-xs font-medium text-[var(--muted)] sm:inline">Status</span>
-          <StatusFilterDropdown value={statusFilter} onChange={onStatusFilterChange} />
-        </div>
-
-        <div className="flex items-center gap-0.5">
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              if (adminUnlocked) {
-                onAdminLock();
-                return;
-              }
-              setPinOpen((v) => !v);
-            }}
-            title={adminUnlocked ? "Lock admin" : "Unlock admin"}
-          >
-            <IconLock unlocked={adminUnlocked} />
-          </Button>
-
-          {pinOpen && !adminUnlocked && (
-            <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
-              <p className="px-1 pb-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
-                Enter admin PIN
-              </p>
-              <div className="px-1 space-y-2">
-                <Input
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="PIN"
-                  type="password"
-                  className="py-1.5 text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter" || unlocking) return;
-                    void tryUnlock();
-                  }}
-                />
+          <div className="flex flex-wrap items-center gap-2">
+            <ScopeDropdown scope={scope} onChange={onScopeChange} members={members} />
+            <StatusFilterDropdown value={statusFilter} onChange={onStatusFilterChange} />
+            <div className="ml-auto flex items-center gap-0.5">
+              <div className="relative">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={unlocking}
-                  onClick={() => void tryUnlock()}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (adminUnlocked) {
+                      onAdminLock();
+                      return;
+                    }
+                    setPinOpen((v) => !v);
+                  }}
+                  title={adminUnlocked ? "Lock admin" : "Unlock admin"}
                 >
-                  {unlocking ? "Unlocking…" : "Unlock"}
+                  <IconLock unlocked={adminUnlocked} />
                 </Button>
-                {pinError && <p className="text-[11px] text-red-500 px-0.5">{pinError}</p>}
-                <p className="text-[11px] text-[var(--muted)] px-0.5">
-                  Unlock enables editing, People branch, and Me-only mode.
-                </p>
+
+                {pinOpen && !adminUnlocked && (
+                  <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
+                    <p className="px-1 pb-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                      Enter admin PIN
+                    </p>
+                    <div className="space-y-2 px-1">
+                      <Input
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        placeholder="PIN"
+                        type="password"
+                        className="py-1.5 text-xs"
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter" || unlocking) return;
+                          void tryUnlock();
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={unlocking}
+                        onClick={() => void tryUnlock()}
+                      >
+                        {unlocking ? "Unlocking…" : "Unlock"}
+                      </Button>
+                      {pinError && <p className="px-0.5 text-[11px] text-red-500">{pinError}</p>}
+                      <p className="px-0.5 text-[11px] text-[var(--muted)]">
+                        Unlock enables editing, People branch, and Me-only mode.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
+              <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out (-)">
+                <IconZoomOut />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in (+)">
+                <IconZoomIn />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onFitView} title="Fit view (0)">
+                <IconFit />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+                {theme === "dark" ? <IconSun /> : <IconMoon />}
+              </Button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop */}
+      <div className="hidden min-w-0 items-center gap-4 lg:flex">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <AppLogo />
+          <div className="h-5 w-px shrink-0 bg-[var(--border-strong)]" aria-hidden />
+          <AppNav />
+
+          {breadcrumbs.length > 0 && (
+            <>
+              <div className="h-5 w-px shrink-0 bg-[var(--border-strong)]" aria-hidden />
+              <nav className="flex min-w-0 items-center gap-1 text-xs text-[var(--muted)]">
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={crumb.id} className="flex min-w-0 items-center gap-1">
+                    {i > 0 && <span className="text-[var(--border-strong)]">/</span>}
+                    <span className="max-w-[120px] truncate font-medium">{crumb.data.label}</span>
+                  </span>
+                ))}
+              </nav>
+            </>
           )}
         </div>
 
-        <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out (-)">
-          <IconZoomOut />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in (+)">
-          <IconZoomIn />
-        </Button>
-        <div className="mx-1 h-4 w-px bg-[var(--border-strong)]" />
-        <Button variant="ghost" size="icon" onClick={onFitView} title="Fit view (0)">
-          <IconFit />
-        </Button>
-        <div className="mx-1 h-4 w-px bg-[var(--border-strong)]" />
-        <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
-          {theme === "dark" ? <IconSun /> : <IconMoon />}
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <select
+            value={activeTeamId ?? ""}
+            onChange={(e) => onTeamChange(e.target.value)}
+            disabled={wsLoading || workspaces.length === 0}
+            className={headerSelectClass}
+            aria-label="Workspace"
+          >
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+
+          <ScopeDropdown scope={scope} onChange={onScopeChange} members={members} />
+          <StatusFilterDropdown value={statusFilter} onChange={onStatusFilterChange} />
+
+          <div className="flex items-center gap-0.5">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (adminUnlocked) {
+                    onAdminLock();
+                    return;
+                  }
+                  setPinOpen((v) => !v);
+                }}
+                title={adminUnlocked ? "Lock admin" : "Unlock admin"}
+              >
+                <IconLock unlocked={adminUnlocked} />
+              </Button>
+
+              {pinOpen && !adminUnlocked && (
+                <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
+                  <p className="px-1 pb-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                    Enter admin PIN
+                  </p>
+                  <div className="space-y-2 px-1">
+                    <Input
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      placeholder="PIN"
+                      type="password"
+                      className="py-1.5 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || unlocking) return;
+                        void tryUnlock();
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={unlocking}
+                      onClick={() => void tryUnlock()}
+                    >
+                      {unlocking ? "Unlocking…" : "Unlock"}
+                    </Button>
+                    {pinError && <p className="px-0.5 text-[11px] text-red-500">{pinError}</p>}
+                    <p className="px-0.5 text-[11px] text-[var(--muted)]">
+                      Unlock enables editing, People branch, and Me-only mode.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out (-)">
+              <IconZoomOut />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in (+)">
+              <IconZoomIn />
+            </Button>
+            <div className="mx-0.5 h-4 w-px bg-[var(--border-strong)]" />
+            <Button variant="ghost" size="icon" onClick={onFitView} title="Fit view (0)">
+              <IconFit />
+            </Button>
+            <div className="mx-0.5 h-4 w-px bg-[var(--border-strong)]" />
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+              {theme === "dark" ? <IconSun /> : <IconMoon />}
+            </Button>
+          </div>
         </div>
       </div>
     </header>
