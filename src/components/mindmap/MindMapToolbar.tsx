@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
+import { AccessSignOutButton } from "@/components/auth/AccessSignOutButton";
 import { AppNav } from "@/components/AppNav";
 import { AppLogo, appHeaderClass, appHeaderDesktopRowClass, headerDropdownTriggerClass, headerSelectClass, HeaderActions, HeaderContextGroup, HeaderControl } from "@/components/layout/AppHeader";
 import { useTheme } from "@/components/ui/ThemeProvider";
@@ -337,6 +338,7 @@ export function MindMapToolbar({
           <div className="flex flex-wrap items-center gap-2">
             <ScopeDropdown scope={scope} onChange={onScopeChange} members={members} />
             <StatusFilterDropdown value={statusFilter} onChange={onStatusFilterChange} />
+            <AccessSignOutButton />
             <div className="ml-auto flex items-center gap-0.5">
               <div className="relative">
                 <Button
@@ -516,6 +518,7 @@ export function MindMapToolbar({
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </Button>
           </HeaderActions>
+          <AccessSignOutButton />
         </div>
       </div>
     </header>

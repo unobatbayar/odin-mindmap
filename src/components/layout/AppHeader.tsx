@@ -1,5 +1,6 @@
 "use client";
 
+import { AccessSignOutButton } from "@/components/auth/AccessSignOutButton";
 import { AppNav } from "@/components/AppNav";
 
 export function AppLogo({ compact = false }: { compact?: boolean }) {
@@ -103,6 +104,7 @@ export function AppHeader({ controls, breadcrumbs }: AppHeaderProps) {
         <AppNav />
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {controls}
+          <AccessSignOutButton />
         </div>
       </div>
 
@@ -120,7 +122,10 @@ export function AppHeader({ controls, breadcrumbs }: AppHeaderProps) {
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-nowrap items-center gap-2 xl:gap-2.5">{controls}</div>
+        <div className="flex shrink-0 flex-nowrap items-center gap-2 xl:gap-2.5">
+          {controls}
+          <AccessSignOutButton />
+        </div>
       </div>
     </header>
   );
