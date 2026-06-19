@@ -506,12 +506,13 @@ function MindMapCanvasInner() {
         return;
       }
 
-      if (target.closest("[data-expand-toggle]")) {
-        toggleExpand(node.id);
-        return;
-      }
+      const nodeData = node.data as MindMapNodeData;
 
-      if ((node.data as MindMapNodeData).type === "loadmore") return;
+      if (nodeData.type === "loadmore") return;
+
+      if (nodeData.hasChildren) {
+        toggleExpand(node.id);
+      }
 
       setSelectedId(node.id);
     },
