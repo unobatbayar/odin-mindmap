@@ -105,7 +105,7 @@ function MindMapNodeComponent({ data }: NodeProps) {
       <div
         className={`
           ${width} group/node glass-strong rounded-xl border shadow-surface
-          transition-all duration-200
+          transition-all duration-200 cursor-pointer
           hover:shadow-surface-lg hover:-translate-y-px
           ${node.isSelected ? "ring-2 ring-[var(--accent)]/50 shadow-surface-lg" : ""}
           ${node.isOnPath && !node.isSelected ? "border-[var(--accent)]/30" : "border-[var(--border)]"}
@@ -119,17 +119,13 @@ function MindMapNodeComponent({ data }: NodeProps) {
         <div className={node.compact ? "px-2.5 py-2" : "px-3 py-2.5"}>
           <div className="flex items-start gap-2">
             {node.hasChildren && (
-              <button
-                type="button"
-                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-indigo-50 hover:text-indigo-500 dark:hover:bg-indigo-950/50 dark:hover:text-indigo-400"
-                data-expand-toggle
-              >
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors group-hover/node:text-indigo-500 dark:group-hover/node:text-indigo-400">
                 {node.isLoading ? (
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-[var(--accent)]" />
                 ) : (
                   <ChevronIcon expanded={node.isExpanded} />
                 )}
-              </button>
+              </span>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-1.5">
