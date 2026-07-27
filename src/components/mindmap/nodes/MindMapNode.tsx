@@ -4,7 +4,11 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
-import { TYPE_COLORS } from "@/lib/mindmap/constants";
+import {
+  NODE_WIDTH,
+  NODE_WIDTH_COMPACT,
+  TYPE_COLORS,
+} from "@/lib/mindmap/constants";
 import type { MindMapNodeData } from "@/types/mindmap";
 
 function formatDueDate(ms: string | null | undefined): string | null {
@@ -72,10 +76,13 @@ function MindMapNodeComponent({ data }: NodeProps) {
   const isLoadMore = node.type === "loadmore";
   const accent = isLoadMore ? "#6366f1" : (TYPE_COLORS[node.type] ?? "#6366f1");
   const due = formatDueDate(node.dueDate);
-  const width = node.compact ? "w-[200px]" : "w-[220px]";
+  const widthPx = node.compact ? NODE_WIDTH_COMPACT : NODE_WIDTH;
   const assigneeCount = node.assignees?.length ?? 0;
   const isCollab = isTask && assigneeCount > 1;
   const canAddInline = Boolean(node.addTaskListId);
+  const showAvatars = !node.compact && Boolean(node.assignees?.length);
+  const showMetaRow =
+    !node.compact || isCollab || canAddInline || showAvatars;
 
   const handleClass = "!w-1.5 !h-1.5 !border-0 !bg-[var(--muted)] !opacity-0";
 
@@ -86,7 +93,8 @@ function MindMapNodeComponent({ data }: NodeProps) {
         <button
           type="button"
           data-load-more
-          className={`${width} group rounded-xl border border-dashed border-indigo-400/60 bg-indigo-50/80 px-3 py-2.5 text-sm font-semibold text-indigo-600 backdrop-blur-sm transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-100/80 hover:shadow-md dark:border-indigo-500/40 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:border-indigo-400/60 dark:hover:bg-indigo-950/50`}
+          className="group rounded-xl border border-dashed border-indigo-400/60 bg-indigo-50/80 px-3 py-2.5 text-sm font-semibold text-indigo-600 backdrop-blur-sm transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-100/80 hover:shadow-md dark:border-indigo-500/40 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:border-indigo-400/60 dark:hover:bg-indigo-950/50"
+          style={{ width: widthPx }}
         >
           <span className="flex items-center justify-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-60 group-hover:opacity-100 transition-opacity">
@@ -105,13 +113,14 @@ function MindMapNodeComponent({ data }: NodeProps) {
       <Handle type="target" position={Position.Left} className={handleClass} />
       <div
         className={`
-          ${width} group/node glass-strong rounded-xl border shadow-surface
+          group/node glass-strong rounded-xl border shadow-surface
           transition-all duration-200 cursor-pointer
           hover:shadow-surface-lg hover:-translate-y-px
           ${node.isSelected ? "ring-2 ring-[var(--accent)]/50 shadow-surface-lg" : ""}
           ${node.isOnPath && !node.isSelected ? "border-[var(--accent)]/30" : "border-[var(--border)]"}
         `}
         style={{
+          width: widthPx,
           borderLeftWidth: 3,
           borderLeftColor: accent,
           ...(node.isSelected ? { boxShadow: `var(--surface-shadow-lg), 0 0 20px var(--accent-glow)` } : {}),
@@ -129,56 +138,65 @@ function MindMapNodeComponent({ data }: NodeProps) {
               </span>
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <p className={`min-w-0 flex-1 truncate font-semibold leading-tight text-zinc-900 dark:text-zinc-50 ${node.compact ? "text-xs" : "text-sm"}`}>
-                  {node.label}
-                </p>
-                {isCollab && (
-                  <span className="shrink-0">
-                    <CollaborationBadge assigneeCount={assigneeCount} />
-                  </span>
-                )}
-                {canAddInline && (
-                  <button
-                    type="button"
-                    data-add-inline
-                    title={node.addTaskParentTaskId ? "Add subtask" : "Add task"}
-                    className="ml-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-50/70 text-emerald-700 shadow-sm transition-colors hover:bg-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                      <path d="M8 3v10M3 8h10" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-              {!node.compact && (
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span
-                    className="inline-flex rounded px-1 py-px text-[9px] font-bold uppercase tracking-wider text-white"
-                    style={{ backgroundColor: accent }}
-                  >
-                    {node.type}
-                  </span>
-                  {node.childCount != null && node.childCount > 0 && !node.isExpanded && (
-                    <span className="text-[10px] font-medium text-[var(--muted)]">
-                      {node.childCount} items
+              <p
+                className={`line-clamp-2 font-semibold leading-tight text-zinc-900 dark:text-zinc-50 ${node.compact ? "text-xs" : "text-sm"}`}
+                title={node.label}
+              >
+                {node.label}
+              </p>
+              {showMetaRow && (
+                <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                  {!node.compact && (
+                    <>
+                      <span
+                        className="inline-flex shrink-0 rounded px-1 py-px text-[9px] font-bold uppercase tracking-wider text-white"
+                        style={{ backgroundColor: accent }}
+                      >
+                        {node.type}
+                      </span>
+                      {node.childCount != null && node.childCount > 0 && !node.isExpanded && (
+                        <span className="shrink-0 text-[10px] font-medium text-[var(--muted)]">
+                          {node.childCount} items
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {isCollab && (
+                    <span className="min-w-0 shrink">
+                      <CollaborationBadge assigneeCount={assigneeCount} />
                     </span>
+                  )}
+                  {(canAddInline || showAvatars) && (
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      {canAddInline && (
+                        <button
+                          type="button"
+                          data-add-inline
+                          title={node.addTaskParentTaskId ? "Add subtask" : "Add task"}
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-50/70 text-emerald-700 shadow-sm transition-colors hover:bg-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                            <path d="M8 3v10M3 8h10" />
+                          </svg>
+                        </button>
+                      )}
+                      {showAvatars && node.assignees && (
+                        <div className={`flex ${isMember ? "" : "-space-x-1.5"}`}>
+                          {node.assignees.slice(0, isMember ? 1 : 2).map((a) => (
+                            <Avatar
+                              key={a.username}
+                              name={a.username}
+                              src={a.profilePicture}
+                              size={isMember ? 28 : 20}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
             </div>
-            {!node.compact && node.assignees && node.assignees.length > 0 && (
-              <div className={`flex shrink-0 ${isMember ? "" : "-space-x-1.5"}`}>
-                {node.assignees.slice(0, isMember ? 1 : 2).map((a) => (
-                  <Avatar
-                    key={a.username}
-                    name={a.username}
-                    src={a.profilePicture}
-                    size={isMember ? 28 : 20}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
           {isTask && !node.compact && (node.status || node.priority || due) && (
