@@ -1,6 +1,6 @@
 export const NODE_WIDTH = 220;
-export const NODE_HEIGHT = 72;
-export const NODE_HEIGHT_COMPACT = 52;
+export const NODE_HEIGHT = 88;
+export const NODE_HEIGHT_COMPACT = 64;
 export const NODE_WIDTH_COMPACT = 200;
 
 /** How many top-level tasks to show per list before "Show more" */
