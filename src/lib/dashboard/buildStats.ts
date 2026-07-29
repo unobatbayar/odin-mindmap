@@ -93,7 +93,7 @@ export async function buildDashboardStats(
 
   for (const task of kpiTasks) {
     const type = task.status.type;
-    if (type === "closed") {
+    if (isFinishedStatus(type)) {
       closed++;
     } else if (type === "custom") {
       inProgress++;
@@ -107,11 +107,11 @@ export async function buildDashboardStats(
       else if (due <= weekEnd) dueThisWeek++;
     }
 
-    if (type !== "closed" && task.assignees.length > 1) {
+    if (!isFinishedStatus(type) && task.assignees.length > 1) {
       collabTasks++;
     }
 
-    if (type !== "closed") {
+    if (!isFinishedStatus(type)) {
       for (const a of task.assignees) {
         activeAssigneeIds.add(a.id);
       }
@@ -145,7 +145,7 @@ export async function buildDashboardStats(
     .map(toTaskSummary);
 
   const recentCompleted = listTasks
-    .filter((t) => t.status.type === "closed")
+    .filter((t) => isFinishedStatus(t.status.type))
     .filter((t) => {
       const closedAt =
         parseTimestamp(t.date_closed) ??
@@ -190,7 +190,9 @@ export async function buildDashboardStats(
     )
     .map(toTaskSummary);
 
-  const allTimeOpen = listTasks.filter((t) => t.status.type !== "closed" && t.status.type !== "custom").length;
+  const allTimeOpen = listTasks.filter(
+    (t) => !isFinishedStatus(t.status.type) && t.status.type !== "custom",
+  ).length;
   const allTimeInProgress = listTasks.filter((t) => t.status.type === "custom").length;
   const forecast = buildForecast(allTimeOpen, allTimeInProgress, weeklyCompleted, now);
   const nextMilestoneForecast = buildMilestoneForecast(milestones, forecast);

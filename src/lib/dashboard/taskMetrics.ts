@@ -5,6 +5,9 @@ import type {
   DashboardTaskSummary,
 } from "@/types/dashboard";
 import type { ClickUpTask, ClickUpUser } from "@/types/clickup";
+import { isFinishedStatus } from "@/lib/clickup/status";
+
+export { isFinishedStatus } from "@/lib/clickup/status";
 
 export function parseRangeDays(range: DashboardDateRange): number {
   return Number.parseInt(range, 10);
@@ -113,10 +116,6 @@ export function getClosedAt(task: ClickUpTask): number {
 }
 
 /** ClickUp Done + Closed — finished work is not open/overdue. */
-export function isFinishedStatus(type: string): boolean {
-  return type === "closed" || type === "done";
-}
-
 export function toAssignee(user: ClickUpUser): DashboardAssignee {
   return {
     id: user.id,
@@ -179,7 +178,7 @@ export function countTaskBuckets(
 
   for (const task of tasks) {
     const type = task.status.type;
-    if (type === "closed") {
+    if (isFinishedStatus(type)) {
       closed++;
     } else if (type === "custom") {
       inProgress++;
@@ -231,7 +230,7 @@ export function buildWeeklyCompleted(
   const counts = new Map(weeks.map((w) => [w.start, 0]));
 
   for (const task of tasks) {
-    if (task.status.type !== "closed") continue;
+    if (!isFinishedStatus(task.status.type)) continue;
     const closedAt = getClosedAt(task);
     if (!closedAt) continue;
 
