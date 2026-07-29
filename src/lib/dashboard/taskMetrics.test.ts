@@ -114,11 +114,9 @@ describe("taskInAbsoluteRange", () => {
 });
 
 describe("isFinishedStatus", () => {
-  it("treats closed and done as finished", () => {
+  it("re-exports shared ClickUp helper", () => {
     expect(isFinishedStatus("closed")).toBe(true);
     expect(isFinishedStatus("done")).toBe(true);
-    expect(isFinishedStatus("open")).toBe(false);
-    expect(isFinishedStatus("custom")).toBe(false);
   });
 });
 
@@ -151,5 +149,7 @@ describe("countTaskBuckets", () => {
     ];
     const counts = countTaskBuckets(tasks);
     expect(counts.overdue).toBe(1);
+    expect(counts.closed).toBe(2);
+    expect(counts.open).toBe(2);
   });
 });

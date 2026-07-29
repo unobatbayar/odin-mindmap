@@ -5,6 +5,7 @@ import {
   parseTimestamp,
   toTaskSummary,
 } from "@/lib/dashboard/taskMetrics";
+import { isFinishedStatus } from "@/lib/clickup/status";
 import { fetchWorkspaceTasks } from "@/lib/workspace/fetchWorkspaceTasks";
 import type { DashboardDateRange } from "@/types/dashboard";
 import type { ActivityEvent, ActivityStats } from "@/types/activity";
@@ -37,7 +38,7 @@ export async function buildActivityStats(
 
   for (const task of tasks) {
     const updated = parseTimestamp(task.date_updated);
-    const isClosed = task.status.type === "closed";
+    const isClosed = isFinishedStatus(task.status.type);
     const closedAt = isClosed ? getClosedAt(task) : null;
     const hasCompletedInRange =
       closedAt !== null && closedAt >= rangeStart;

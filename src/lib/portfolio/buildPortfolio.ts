@@ -76,7 +76,7 @@ export async function buildPortfolioStats(
 
   const staleTasks = tasks
     .filter((t) => {
-      if (t.status.type === "closed") return false;
+      if (isFinishedStatus(t.status.type)) return false;
       const updated = parseTimestamp(t.date_updated);
       return updated !== null && now - updated >= STALE_MS;
     })
@@ -91,7 +91,7 @@ export async function buildPortfolioStats(
   const atRiskMilestones = tasks
     .filter((t) => t.custom_item_id === 1)
     .filter((t) => {
-      if (t.status.type === "closed") return false;
+      if (isFinishedStatus(t.status.type)) return false;
       const due = parseTimestamp(t.due_date);
       return due !== null && due < now + 7 * 86_400_000;
     })

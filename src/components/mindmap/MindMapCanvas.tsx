@@ -153,6 +153,17 @@ function MindMapCanvasInner() {
   );
 
   const handleScopeChange = useCallback((next: MindMapScope) => {
+    // Leaving All for a person: drop hierarchy deep links so the load effect
+    // doesn't force-reset scope back to All (cold-boot guard still applies).
+    // Also clear selection now — otherwise the selection→URL sync effect can
+    // rewrite the hierarchy path in the same commit (Strict Mode remount risk).
+    if (next.mode === "member") {
+      const path = readMindmapPath();
+      if (isHierarchyPath(path)) {
+        writeMindmapPath([]);
+        setSelectedId(null);
+      }
+    }
     setScope(next);
     try {
       window.localStorage.setItem(SCOPE_KEY, JSON.stringify(next));
