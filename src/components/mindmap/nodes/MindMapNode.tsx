@@ -60,11 +60,10 @@ function TeamworkIcon() {
 function CollaborationBadge({ assigneeCount }: { assigneeCount: number }) {
   return (
     <span
-      className="inline-flex h-4 items-center gap-1 rounded-full border border-[var(--border-strong)] bg-black/[0.03] px-1.5 text-[9px] font-semibold tracking-wide text-[var(--muted)] dark:bg-white/[0.06]"
+      className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] bg-black/[0.03] text-[var(--muted)] dark:bg-white/[0.06]"
       title={`Collaboration · ${assigneeCount} people`}
     >
       <TeamworkIcon />
-      <span className="truncate">Collaboration</span>
     </span>
   );
 }

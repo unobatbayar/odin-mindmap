@@ -223,12 +223,27 @@ export function tasksToNodes(
   return nodes;
 }
 
+/** Member-scoped cache ids — avoid colliding with hierarchy `list:` / `task:` nodes in All scope. */
+function memberScopedNodeId(
+  kind: "list" | "task" | "subtask",
+  memberNodeId: string,
+  clickupId: string,
+): string {
+  const userId = memberNodeId.startsWith("member:")
+    ? memberNodeId.slice("member:".length)
+    : memberNodeId;
+  if (kind === "list") return `mlist:${userId}:${clickupId}`;
+  if (kind === "subtask") return `msubtask:${userId}:${clickupId}`;
+  return `mtask:${userId}:${clickupId}`;
+}
+
 export function tasksToMemberListNodes(
   tasks: ClickUpTask[],
   memberNodeId: string,
 ): NodeRecord[] {
   // Group tasks by ClickUp list so member scope reads like “Projects → Tasks”.
-  // We create real `list:` node ids; this is safe because the UI resets cache when switching scopes.
+  // Use member-scoped ids so All-scope hierarchy lists/tasks in the shared cache
+  // are not skipped during merge (which left members stuck with empty expands).
   const listById = new Map<string, { id: string; name: string }>();
   for (const t of tasks) {
     if (t.list?.id) {
@@ -239,9 +254,9 @@ export function tasksToMemberListNodes(
   const listNodes: NodeRecord[] = Array.from(listById.values())
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((l) => ({
-      id: makeNodeId("list", l.id),
+      id: memberScopedNodeId("list", memberNodeId, l.id),
       data: {
-        type: "list",
+        type: "list" as const,
         clickupId: l.id,
         parentId: memberNodeId,
         label: l.name,
@@ -254,14 +269,16 @@ export function tasksToMemberListNodes(
 
   function listParentFor(task: ClickUpTask): string {
     const listId = task.list?.id;
-    return listId ? makeNodeId("list", listId) : memberNodeId;
+    return listId
+      ? memberScopedNodeId("list", memberNodeId, listId)
+      : memberNodeId;
   }
 
   function parentNodeId(task: ClickUpTask): string {
     if (!task.parent) return listParentFor(task);
     const parent = byId.get(task.parent);
     const parentType = parent?.parent ? "subtask" : "task";
-    return makeNodeId(parentType, task.parent);
+    return memberScopedNodeId(parentType, memberNodeId, task.parent);
   }
 
   function nodeType(task: ClickUpTask): "task" | "subtask" {
@@ -270,7 +287,7 @@ export function tasksToMemberListNodes(
 
   const taskNodes: NodeRecord[] = tasks.map((task) => {
     const type = nodeType(task);
-    const id = makeNodeId(type, task.id);
+    const id = memberScopedNodeId(type, memberNodeId, task.id);
     const parentId = parentNodeId(task);
     const childCount = tasks.filter((t) => t.parent === task.id).length;
 
@@ -292,7 +309,7 @@ export function tasksToMemberListNodes(
   for (const n of taskNodes) {
     if (n.data.type !== "task") continue;
     const parent = n.data.parentId;
-    if (!parent || !parent.startsWith("list:")) continue;
+    if (!parent || parent === memberNodeId) continue;
     counts.set(parent, (counts.get(parent) ?? 0) + 1);
   }
 
