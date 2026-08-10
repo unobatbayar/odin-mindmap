@@ -41,21 +41,37 @@ function mergeChildrenIntoCache(
   parentId: string,
   children: NodeRecord[],
 ): void {
-  const parent = map.get(parentId);
-  if (parent) {
-    const directCount = children.filter((c) => c.data.parentId === parentId).length;
-    map.set(parentId, {
-      ...parent,
-      data: {
-        ...parent.data,
-        childrenLoaded: true,
-        childCount: directCount > 0 ? directCount : undefined,
-      },
-    });
-  }
   for (const child of children) {
     if (!map.has(child.id)) map.set(child.id, child);
   }
+  const parent = map.get(parentId);
+  if (!parent) return;
+
+  let directCount = 0;
+  for (const record of map.values()) {
+    if (record.data.parentId === parentId) directCount += 1;
+  }
+
+  map.set(parentId, {
+    ...parent,
+    data: {
+      ...parent.data,
+      childrenLoaded: true,
+      hasChildren: directCount > 0,
+      childCount: directCount > 0 ? directCount : undefined,
+    },
+  });
+}
+
+function countDirectChildren(
+  map: Map<string, NodeRecord>,
+  parentId: string,
+): number {
+  let n = 0;
+  for (const record of map.values()) {
+    if (record.data.parentId === parentId) n += 1;
+  }
+  return n;
 }
 
 /** Whether a deep-linked node would actually be visible in the current scope/admin mode. */
@@ -289,19 +305,7 @@ function MindMapCanvasInner() {
             const parent = next.get(result.nodeId);
             if (!parent || parent.data.childrenLoaded) continue;
             changed = true;
-            const directCount = result.children.filter((c) => c.data.parentId === result.nodeId)
-              .length;
-            next.set(result.nodeId, {
-              ...parent,
-              data: {
-                ...parent.data,
-                childrenLoaded: true,
-                childCount: directCount > 0 ? directCount : undefined,
-              },
-            });
-            for (const child of result.children) {
-              if (!next.has(child.id)) next.set(child.id, child);
-            }
+            mergeChildrenIntoCache(next, result.nodeId, result.children);
           }
           return changed ? next : prev;
         });
@@ -637,16 +641,26 @@ function MindMapCanvasInner() {
 
   const loadChildren = useCallback(async (
     nodeId: string,
-    opts?: { quiet?: boolean },
+    opts?: { quiet?: boolean; force?: boolean },
   ): Promise<boolean> => {
     let shouldLoad = false;
     let loadEstimate: number | undefined;
 
     setCache((prev) => {
       const record = prev.get(nodeId);
-      if (!record || record.data.childrenLoaded) return prev;
+      if (!record) return prev;
+      if (record.data.childrenLoaded && !opts?.force) return prev;
       shouldLoad = true;
       loadEstimate = record.data.loadEstimate;
+      if (opts?.force && record.data.childrenLoaded) {
+        const next = new Map(prev);
+        next.set(nodeId, {
+          ...record,
+          data: { ...record.data, childrenLoaded: false },
+        });
+        cacheRef.current = next;
+        return next;
+      }
       return prev;
     });
 
@@ -678,23 +692,7 @@ function MindMapCanvasInner() {
 
       setCache((prev) => {
         const next = new Map(prev);
-        const parent = next.get(nodeId);
-        if (parent) {
-          const directCount = children.filter((c) => c.data.parentId === nodeId).length;
-          next.set(nodeId, {
-            ...parent,
-            data: {
-              ...parent.data,
-              childrenLoaded: true,
-              childCount: directCount > 0 ? directCount : undefined,
-            },
-          });
-        }
-        for (const child of children) {
-          if (!next.has(child.id)) {
-            next.set(child.id, child);
-          }
-        }
+        mergeChildrenIntoCache(next, nodeId, children);
         cacheRef.current = next;
         return next;
       });
@@ -770,6 +768,13 @@ function MindMapCanvasInner() {
 
       if (!record.data.childrenLoaded) {
         const loaded = await loadChildren(nodeId);
+        if (!loaded) return;
+      } else if (
+        ((record.data.childCount ?? 0) > 0 || record.data.hasChildren) &&
+        countDirectChildren(cacheRef.current, nodeId) === 0
+      ) {
+        // Recover stuck nodes marked loaded after id collisions left them with no kids.
+        const loaded = await loadChildren(nodeId, { force: true });
         if (!loaded) return;
       }
 
