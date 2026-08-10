@@ -172,6 +172,11 @@ function MindMapCanvasInner() {
     }
   }, []);
 
+  const handleStatusFilterChange = useCallback((filter: TaskStatusFilter) => {
+    fitOnNextLayout.current = true;
+    setStatusFilter(filter);
+  }, []);
+
   const selectedNode = selectedId ? cache.get(selectedId) ?? null : null;
 
   const viewCache = useMemo(() => {
@@ -982,7 +987,7 @@ function MindMapCanvasInner() {
     <div className="flex h-screen flex-col">
       <MindMapToolbar
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusFilterChange}
         onZoomIn={() => zoomIn({ duration: 200 })}
         onZoomOut={() => zoomOut({ duration: 200 })}
         onFitView={() => fitView({ padding: 0.2, duration: 300 })}
