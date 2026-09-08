@@ -19,7 +19,7 @@ interface AnimateOptions {
 /**
  * Animates between two viewports, interpolating pxPerDay in log-space
  * (zoom is multiplicative, so linear interpolation of pxPerDay itself
- * feels uneven) and viewStartMs linearly. Returns a cancel function —
+ * feels uneven) and viewStartMs linearly. Returns a cancel function  - 
  * callers must invoke it the instant a new user gesture starts so manual
  * input always preempts an in-flight animation.
  */

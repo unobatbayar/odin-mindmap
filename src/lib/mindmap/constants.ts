@@ -20,13 +20,13 @@ export const PRIORITY_OPTIONS = [
 ] as const;
 
 export const TYPE_COLORS: Record<string, string> = {
-  workspace: "#6366f1",
-  space: "#8b5cf6",
-  folder: "#a78bfa",
-  list: "#c4b5fd",
+  workspace: "#0071e3",
+  space: "#0b7ceb",
+  folder: "#2b8bf0",
+  list: "#4b9cf5",
   task: "#3b82f6",
   subtask: "#60a5fa",
-  loadmore: "#6366f1",
+  loadmore: "#0071e3",
   people: "#0d9488",
   member: "#14b8a6",
 };

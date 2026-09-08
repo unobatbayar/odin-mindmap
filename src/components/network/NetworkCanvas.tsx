@@ -26,6 +26,7 @@ import { NetworkDetailPanel } from "./NetworkDetailPanel";
 import { NetworkInteractionProvider } from "./NetworkInteractionContext";
 import { fetchNetworkGraph } from "@/lib/network/api";
 import { layoutNetworkNodes } from "@/lib/network/layout";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import type {
   NetworkEdge as NetworkEdgeType,
   NetworkGraph,
@@ -144,6 +145,7 @@ function NetworkCanvasInner({
   search,
   collabOnly,
 }: NetworkCanvasProps) {
+  const { t } = useI18n();
   const { fitView, getNodes } = useReactFlow();
   const [graph, setGraph] = useState<NetworkGraph | null>(null);
   const [loading, setLoading] = useState(true);
@@ -171,7 +173,7 @@ function NetworkCanvasInner({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load network");
+          setError(err instanceof Error ? err.message : t("error.loadNetwork"));
         }
       })
       .finally(() => {
@@ -181,7 +183,7 @@ function NetworkCanvasInner({
     return () => {
       cancelled = true;
     };
-  }, [teamId]);
+  }, [teamId, t]);
 
   const filtered = useMemo(() => {
     if (!graph) return { nodes: [], edges: [] };
@@ -274,9 +276,6 @@ function NetworkCanvasInner({
     return (
       <div className="canvas-bg flex h-full min-h-0 flex-1 flex-col items-center justify-center gap-4">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--accent)]" />
-        <p className="text-sm font-medium text-[var(--muted)]">
-          Building network graph…
-        </p>
       </div>
     );
   }
@@ -292,7 +291,7 @@ function NetworkCanvasInner({
   if (!graph || filtered.nodes.length === 0) {
     return (
       <div className="canvas-bg flex h-full min-h-0 flex-1 items-center justify-center px-6">
-        <p className="text-sm font-medium text-[var(--muted)]">No nodes to display</p>
+        <p className="text-sm font-medium text-[var(--muted)]">{t("network.noNodes")}</p>
       </div>
     );
   }

@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
+import {
+  List,
+  ListGroup,
+  ListItem,
+  ListItemContent,
+  ListItemTitle,
+} from "@/components/ui/list";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import type {
   DashboardMemberWorkload,
   DashboardTaskSummary,
@@ -66,20 +75,28 @@ function Chevron({ open }: { open: boolean }) {
 
 function TaskList({ tasks }: { tasks: DashboardTaskSummary[] }) {
   return (
-    <ul className="mb-2 space-y-0.5 pl-5">
-      {tasks.map((task) => (
-        <li key={task.id}>
-          <a
-            href={task.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block truncate rounded-md px-2 py-1 text-xs text-[var(--muted)] transition-colors hover:bg-[var(--panel-solid)] hover:text-zinc-800 dark:hover:text-zinc-100"
-          >
-            {task.name}
-          </a>
-        </li>
-      ))}
-    </ul>
+    <List className="mb-2 ml-4">
+      <ListGroup>
+        {tasks.map((task) => (
+          <li key={task.id} className="list-none">
+            <ListItem asChild>
+              <a
+                href={task.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="!py-2"
+              >
+                <ListItemContent>
+                  <ListItemTitle className="text-xs font-medium text-[var(--muted)] hover:text-zinc-800 dark:hover:text-zinc-100">
+                    {task.name}
+                  </ListItemTitle>
+                </ListItemContent>
+              </a>
+            </ListItem>
+          </li>
+        ))}
+      </ListGroup>
+    </List>
   );
 }
 
@@ -88,6 +105,7 @@ interface MemberCapacityCardProps {
 }
 
 export function MemberCapacityCard({ member }: MemberCapacityCardProps) {
+  const { t } = useI18n();
   const [expandedStatus, setExpandedStatus] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
 
@@ -98,22 +116,31 @@ export function MemberCapacityCard({ member }: MemberCapacityCardProps) {
   return (
     <article className="glass-inset rounded-xl border border-[var(--border)] p-4 shadow-surface">
       <div className="flex items-start gap-3">
-        <Avatar
-          name={member.name}
-          src={member.profilePicture}
-          size={36}
-        />
+        <Link
+          href={`/performance/${member.id}`}
+          className="shrink-0 rounded-full"
+          title={t("dashboard.viewPerformance", { name: member.name })}
+        >
+          <Avatar
+            name={member.name}
+            src={member.profilePicture}
+            size={36}
+          />
+        </Link>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-50">
+          <Link
+            href={`/performance/${member.id}`}
+            className="block truncate text-sm font-bold text-zinc-900 hover:text-blue-600 dark:text-zinc-50 dark:hover:text-blue-400"
+          >
             {member.name}
-          </p>
+          </Link>
           <div className="mt-2 grid grid-cols-2 gap-3">
             <div>
               <p className="text-lg font-bold tabular-nums text-zinc-800 dark:text-zinc-100">
                 {member.notDone}
               </p>
               <p className="text-[10px] font-medium text-[var(--muted)]">
-                Not done
+                {t("common.notDone")}
               </p>
             </div>
             <div>
@@ -124,11 +151,11 @@ export function MemberCapacityCard({ member }: MemberCapacityCardProps) {
                   className="group text-left"
                   aria-expanded={doneOpen}
                 >
-                  <p className="text-lg font-bold tabular-nums text-zinc-800 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                  <p className="text-lg font-bold tabular-nums text-zinc-800 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                     {member.done}
                   </p>
-                  <p className="flex items-center gap-1 text-[10px] font-medium text-[var(--muted)] group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                    Done
+                  <p className="flex items-center gap-1 text-[10px] font-medium text-[var(--muted)] group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    {t("common.done")}
                     <Chevron open={doneOpen} />
                   </p>
                 </button>
@@ -138,7 +165,7 @@ export function MemberCapacityCard({ member }: MemberCapacityCardProps) {
                     {member.done}
                   </p>
                   <p className="text-[10px] font-medium text-[var(--muted)]">
-                    Done
+                    {t("common.done")}
                   </p>
                 </>
               )}
@@ -151,7 +178,7 @@ export function MemberCapacityCard({ member }: MemberCapacityCardProps) {
       {doneOpen && member.doneTasks.length > 0 && (
         <div className="mt-3 border-t border-[var(--border)] pt-2">
           <p className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">
-            Done tasks
+            {t("dashboard.doneTasks")}
           </p>
           <TaskList tasks={member.doneTasks} />
         </div>

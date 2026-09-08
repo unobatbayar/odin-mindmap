@@ -7,7 +7,7 @@ interface Interval {
  * Greedy interval-scheduling lane assignment: sorts by start time and
  * assigns each item to the first lane whose last item already ended,
  * opening a new lane otherwise. O(n * lanes), which is fine at the scale
- * of a single workspace's tasks (dozens to low hundreds) — no need for a
+ * of a single workspace's tasks (dozens to low hundreds) - no need for a
  * min-heap-by-lane-end here.
  */
 export function packLanes<T extends Interval>(items: T[]): (T & { lane: number })[] {
@@ -36,7 +36,7 @@ export function laneCount<T extends Interval>(items: (T & { lane: number })[]): 
 /**
  * Groups items by a key and packs lanes independently within each group.
  * Intended to be memoized on [items, groupBy] and never recomputed on
- * pan/zoom — recomputing per zoom step would visibly shuffle lanes.
+ * pan/zoom - recomputing per zoom step would visibly shuffle lanes.
  */
 export function packLanesByGroup<T extends Interval>(
   items: T[],

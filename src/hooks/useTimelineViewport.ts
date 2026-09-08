@@ -38,7 +38,7 @@ export interface TimelineViewportApi {
  * Owns the timeline's viewport state (visible window + zoom scale) and
  * wires up all pan/zoom gesture handling: mouse wheel, ctrl+wheel /
  * trackpad-pinch-as-wheel, real two-finger touch pinch, and pointer
- * drag-to-pan. Knows nothing about bars/rendering — pure viewport math +
+ * drag-to-pan. Knows nothing about bars/rendering - pure viewport math +
  * DOM event wiring, independent of the data being displayed.
  */
 export function useTimelineViewport({
@@ -137,7 +137,7 @@ export function useTimelineViewport({
           viewStartMs: current.viewStartMs + (deltaX / current.pxPerDay) * DAY_MS,
         });
       }
-      // Otherwise: dominant vertical wheel with no modifier — leave it
+      // Otherwise: dominant vertical wheel with no modifier - leave it
       // alone so native vertical row-scrolling keeps working.
     }
 
@@ -165,7 +165,7 @@ export function useTimelineViewport({
     }
 
     function handlePointerDown(e: PointerEvent) {
-      // Only drag-pan from empty canvas background — bars/buttons opt out
+      // Only drag-pan from empty canvas background - bars/buttons opt out
       // via data-timeline-interactive so their own click handlers still fire.
       const target = e.target as HTMLElement;
       if (target.closest("[data-timeline-interactive]")) return;

@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { headerDropdownTriggerClass } from "@/components/layout/AppHeader";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { statusFilterMessageKey, useI18n } from "@/components/i18n/LocaleProvider";
 import { STATUS_FILTER_OPTIONS, type TaskStatusFilter } from "@/lib/mindmap/constants";
-
-interface StatusFilterDropdownProps {
-  value: TaskStatusFilter;
-  onChange: (value: TaskStatusFilter) => void;
-}
+import { ChevronDown } from "lucide-react";
 
 function StatusIcon({ filter, color }: { filter: TaskStatusFilter; color: string }) {
   switch (filter) {
@@ -44,79 +47,41 @@ function StatusIcon({ filter, color }: { filter: TaskStatusFilter; color: string
   }
 }
 
-export function StatusFilterDropdown({ value, onChange }: StatusFilterDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+export function StatusFilterDropdown({
+  value,
+  onChange,
+}: {
+  value: TaskStatusFilter;
+  onChange: (value: TaskStatusFilter) => void;
+}) {
+  const { t } = useI18n();
   const current = STATUS_FILTER_OPTIONS.find((o) => o.value === value)!;
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={headerDropdownTriggerClass}
-      >
+    <DropdownMenu>
+      <DropdownMenuTrigger className={headerDropdownTriggerClass}>
         <StatusIcon filter={value} color={current.color} />
-        <span>{current.label}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          className={`text-[var(--muted)] transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+        <span>{t(statusFilterMessageKey(current.value))}</span>
+        <ChevronDown className="h-3 w-3 text-[var(--muted)]" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[168px]">
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={(v) => onChange(v as TaskStatusFilter)}
         >
-          <path d="M3 4.5L6 7.5L9 4.5" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[168px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-1 shadow-surface-lg">
-          {STATUS_FILTER_OPTIONS.map((opt) => {
-            const selected = opt.value === value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors ${
-                  selected
-                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
-                    : "text-zinc-700 hover:bg-black/[0.04] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-                }`}
+          {STATUS_FILTER_OPTIONS.map((opt) => (
+            <DropdownMenuRadioItem key={opt.value} value={opt.value}>
+              <span
+                className="mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
+                style={{ backgroundColor: `${opt.color}18` }}
               >
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
-                  style={{ backgroundColor: `${opt.color}18` }}
-                >
-                  <StatusIcon filter={opt.value} color={opt.color} />
-                </span>
-                <span className="flex-1">{opt.label}</span>
-                {selected && (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-indigo-500">
-                    <path d="M3 7l3 3 5-5.5" />
-                  </svg>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                <StatusIcon filter={opt.value} color={opt.color} />
+              </span>
+              {t(statusFilterMessageKey(opt.value))}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export type AdminUnlockResult = { ok: true } | { ok: false; error: string };
+export type AdminUnlockError = "tooMany" | "unconfigured" | "wrongPin" | "unable";
+
+export type AdminUnlockResult = { ok: true } | { ok: false; error: AdminUnlockError };
 
 export function useAdminUnlocked() {
   const [adminUnlocked, setAdminUnlocked] = useState(false);
@@ -38,26 +40,27 @@ export function useAdminUnlocked() {
 
       if (res.ok) {
         setAdminUnlocked(true);
+        window.location.reload();
         return { ok: true };
       }
 
       if (res.status === 429) {
-        return { ok: false, error: "Too many attempts. Try again later." };
+        return { ok: false, error: "tooMany" };
       }
       if (res.status === 503) {
-        return { ok: false, error: "Admin PIN is not configured." };
+        return { ok: false, error: "unconfigured" };
       }
 
-      const data = (await res.json().catch(() => null)) as { error?: string } | null;
-      return { ok: false, error: data?.error ?? "Wrong PIN" };
+      return { ok: false, error: "wrongPin" };
     } catch {
-      return { ok: false, error: "Unable to unlock. Please try again." };
+      return { ok: false, error: "unable" };
     }
   }, []);
 
   const lockAdmin = useCallback(async () => {
     await fetch("/api/admin/session", { method: "DELETE" });
     setAdminUnlocked(false);
+    window.location.reload();
   }, []);
 
   return { adminUnlocked, loading, unlockAdmin, lockAdmin };

@@ -22,7 +22,7 @@ interface TimelineRowGroupProps {
 
 /**
  * Renders the lanes/bars for a single rowLabel group. Only the plotting
- * content — the row's label gutter cell lives in a separate DOM column
+ * content - the row's label gutter cell lives in a separate DOM column
  * owned by the parent (see TimelineCanvas), since the label column and
  * plotting column are siblings, not nested, in the two-column layout.
  */

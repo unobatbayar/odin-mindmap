@@ -4,28 +4,10 @@ import {
   AppHeader,
   HeaderContextGroup,
   HeaderControl,
-  headerSelectClass,
 } from "@/components/layout/AppHeader";
-import { Button } from "@/components/ui/Button";
-import { useTheme } from "@/components/ui/ThemeProvider";
+import { HeaderSelect } from "@/components/ui/Select";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { DashboardDateRange, DashboardProject } from "@/types/dashboard";
-
-function IconSun() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-      <circle cx="8" cy="8" r="3" />
-      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" />
-    </svg>
-  );
-}
-
-function IconMoon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13.5 9.5a5.5 5.5 0 01-7-7 5.5 5.5 0 107 7z" />
-    </svg>
-  );
-}
 
 const RANGE_OPTIONS: { value: DashboardDateRange; label: string }[] = [
   { value: "7d", label: "7d" },
@@ -62,7 +44,7 @@ export function TabPageShell({
   range = "30d",
   onRangeChange,
 }: TabPageShellProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { t } = useI18n();
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
@@ -70,38 +52,30 @@ export function TabPageShell({
         filters={
           <>
             <HeaderContextGroup>
-              <HeaderControl label="Workspace" grouped>
-                <select
+              <HeaderControl label={t("common.workspace")} grouped>
+                <HeaderSelect
                   value={activeTeamId ?? ""}
-                  onChange={(e) => onTeamChange(e.target.value)}
+                  onValueChange={onTeamChange}
                   disabled={wsLoading || workspaces.length === 0}
-                  className={headerSelectClass}
-                  aria-label="Workspace"
-                >
-                  {workspaces.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.label}
-                    </option>
-                  ))}
-                </select>
+                  aria-label={t("common.workspace")}
+                  options={workspaces.map((w) => ({ value: w.id, label: w.label }))}
+                />
               </HeaderControl>
 
               {showProjectFilter && onListIdChange && (
-                <HeaderControl label="Project" grouped>
-                  <select
+                <HeaderControl label={t("common.project")} grouped>
+                  <HeaderSelect
                     value={listId ?? ""}
-                    onChange={(e) => onListIdChange(e.target.value || null)}
+                    onValueChange={(id) => onListIdChange(id || null)}
                     disabled={!activeTeamId || projects.length === 0}
-                    className={headerSelectClass}
-                    aria-label="Project"
-                  >
-                    <option value="">All projects</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.taskCount})
-                      </option>
-                    ))}
-                  </select>
+                    aria-label={t("common.project")}
+                    allowEmpty
+                    emptyLabel={t("common.allProjects")}
+                    options={projects.map((p) => ({
+                      value: p.id,
+                      label: `${p.name} (${p.taskCount})`,
+                    }))}
+                  />
                 </HeaderControl>
               )}
             </HeaderContextGroup>
@@ -115,8 +89,8 @@ export function TabPageShell({
                     onClick={() => onRangeChange(opt.value)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                       range === opt.value
-                        ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
-                        : "text-[var(--muted)] hover:text-zinc-700 dark:hover:text-zinc-200"
+                        ? "bg-[var(--accent-soft)] text-[var(--accent-foreground)]"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     }`}
                   >
                     {opt.label}
@@ -126,11 +100,6 @@ export function TabPageShell({
             )}
           </>
         }
-        actions={
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
-            {theme === "dark" ? <IconSun /> : <IconMoon />}
-          </Button>
-        }
       />
 
       <div className="canvas-bg safe-bottom min-h-0 flex-1">
@@ -139,7 +108,7 @@ export function TabPageShell({
         ) : (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm font-medium text-[var(--muted)]">
-              {wsLoading ? "Loading workspaces…" : "No workspace available"}
+              {wsLoading ? t("common.loadingWorkspaces") : t("common.noWorkspace")}
             </p>
           </div>
         )}

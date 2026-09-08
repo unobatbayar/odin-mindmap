@@ -28,14 +28,14 @@ function ProjectNodeComponent({ id, data }: NodeProps) {
       <div
         className={`rounded-xl border px-2.5 py-1.5 shadow-surface transition-all duration-150 ${
           highlighted || focused
-            ? "border-indigo-400/60 bg-indigo-50/90 ring-2 ring-indigo-500/40 dark:border-indigo-500/40 dark:bg-indigo-950/50"
+            ? "border-blue-400/60 bg-blue-50/90 ring-2 ring-blue-500/40 dark:border-blue-500/40 dark:bg-blue-950/50"
             : "glass-solid border-[var(--border-strong)]"
         }`}
       >
         <p
           className={`max-w-[100px] truncate text-[10px] font-semibold ${
             highlighted || focused
-              ? "text-indigo-700 dark:text-indigo-200"
+              ? "text-blue-700 dark:text-blue-200"
               : "text-zinc-700 dark:text-zinc-200"
           }`}
         >

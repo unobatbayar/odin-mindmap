@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { KpiCard } from "./KpiCard";
 import { KpiTaskPanel } from "./KpiTaskPanel";
 import type { DashboardStats } from "@/types/dashboard";
@@ -13,6 +14,7 @@ interface KpiGridProps {
 }
 
 export function KpiGrid({ totals, dueTasks }: KpiGridProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState<KpiPanel | null>(null);
 
   function toggle(panel: KpiPanel, count: number) {
@@ -24,17 +26,21 @@ export function KpiGrid({ totals, dueTasks }: KpiGridProps) {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard
-          label="Total tasks"
+          label={t("dashboard.totalTasks")}
           value={totals.total}
-          sublabel={`${totals.open} open · ${totals.inProgress} in progress · ${totals.closed} done`}
+          sublabel={t("dashboard.kpiOpenMix", {
+            open: totals.open,
+            inProgress: totals.inProgress,
+            closed: totals.closed,
+          })}
         />
         <KpiCard
-          label="Completion rate"
+          label={t("dashboard.completionRate")}
           value={`${totals.completionRate}%`}
           accent="success"
         />
         <KpiCard
-          label="Overdue"
+          label={t("dashboard.overdue")}
           value={totals.overdue}
           accent={totals.overdue > 0 ? "danger" : "default"}
           interactive={totals.overdue > 0}
@@ -42,7 +48,7 @@ export function KpiGrid({ totals, dueTasks }: KpiGridProps) {
           onClick={() => toggle("overdue", totals.overdue)}
         />
         <KpiCard
-          label="Due this week"
+          label={t("dashboard.dueThisWeek")}
           value={totals.dueThisWeek}
           accent={totals.dueThisWeek > 0 ? "warning" : "default"}
           interactive={totals.dueThisWeek > 0}
@@ -50,20 +56,20 @@ export function KpiGrid({ totals, dueTasks }: KpiGridProps) {
           onClick={() => toggle("dueThisWeek", totals.dueThisWeek)}
         />
         <KpiCard
-          label="Active collaborators"
+          label={t("dashboard.activeCollaborators")}
           value={totals.activeCollaborators}
-          sublabel="People with open tasks"
+          sublabel={t("dashboard.peopleWithOpen")}
         />
         <KpiCard
-          label="Co-assigned tasks"
+          label={t("dashboard.coAssigned")}
           value={totals.collabTasks}
-          sublabel="Multi-assignee work"
+          sublabel={t("dashboard.multiAssignee")}
         />
       </div>
 
       {expanded === "overdue" && (
         <KpiTaskPanel
-          title="Overdue tasks"
+          title={t("dashboard.overdueTasks")}
           tasks={dueTasks.overdue}
           variant="danger"
           onClose={() => setExpanded(null)}
@@ -71,7 +77,7 @@ export function KpiGrid({ totals, dueTasks }: KpiGridProps) {
       )}
       {expanded === "dueThisWeek" && (
         <KpiTaskPanel
-          title="Due this week"
+          title={t("kpi.dueThisWeek")}
           tasks={dueTasks.dueThisWeek}
           variant="warning"
           onClose={() => setExpanded(null)}

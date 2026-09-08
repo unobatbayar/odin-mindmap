@@ -82,7 +82,7 @@ export function TimelineClusterChip({ x1, x2, lane, members, onSelectMember }: T
             >
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: bar.task.status.color || "#818cf8" }}
+                style={{ backgroundColor: bar.task.status.color || "#0071e3" }}
               />
               <span className="truncate">{bar.task.name}</span>
             </button>

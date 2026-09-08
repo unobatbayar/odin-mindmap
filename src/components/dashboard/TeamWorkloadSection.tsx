@@ -1,3 +1,6 @@
+"use client";
+
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { MemberCapacityCard } from "./MemberCapacityCard";
 import type { DashboardMemberWorkload } from "@/types/dashboard";
 
@@ -6,14 +9,16 @@ interface TeamWorkloadSectionProps {
 }
 
 export function TeamWorkloadSection({ teamWorkload }: TeamWorkloadSectionProps) {
+  const { t } = useI18n();
+
   if (teamWorkload.length === 0) {
     return (
       <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
         <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-          Team workload
+          {t("dashboard.teamWorkload")}
         </h2>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          No assigned tasks found for this workspace or project filter.
+          {t("dashboard.workloadEmpty")}
         </p>
       </section>
     );
@@ -24,14 +29,16 @@ export function TeamWorkloadSection({ teamWorkload }: TeamWorkloadSectionProps) 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-            Team workload
+            {t("dashboard.teamWorkload")}
           </h2>
           <p className="mt-0.5 text-xs text-[var(--muted)]">
-            Open tasks by assignee and status
+            {t("dashboard.workloadSublabel")}
           </p>
         </div>
         <p className="text-xs font-medium text-[var(--muted)]">
-          {teamWorkload.length} member{teamWorkload.length === 1 ? "" : "s"}
+          {t(teamWorkload.length === 1 ? "common.membersOne" : "common.members", {
+            count: teamWorkload.length,
+          })}
         </p>
       </div>
 
