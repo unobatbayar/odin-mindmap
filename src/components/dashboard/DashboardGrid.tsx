@@ -1,7 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { ActivitySection } from "./ActivitySection";
-import { formatRangeLabel } from "./DateRangeDropdown";
 import { ForecastTimeline } from "./ForecastTimeline";
 import { GoalsSection } from "./GoalsSection";
 import { KpiGrid } from "./KpiGrid";
@@ -14,6 +14,7 @@ interface DashboardGridProps {
 }
 
 export function DashboardGrid({ stats }: DashboardGridProps) {
+  const { t, formatRangeLabel } = useI18n();
   const activeProject = stats.listId
     ? stats.projects.find((p) => p.id === stats.listId)
     : null;
@@ -26,8 +27,8 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
         <p className="text-xs font-medium text-[var(--muted)]">
           {periodLabel && (
             <>
-              Showing{" "}
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+              {t("dashboard.showing")}{" "}
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
                 {periodLabel}
               </span>
             </>
@@ -35,11 +36,11 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
           {periodLabel && activeProject ? " · " : null}
           {activeProject && (
             <>
-              {periodLabel ? null : "Showing "}
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+              {periodLabel ? null : `${t("dashboard.showing")} `}
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
                 {activeProject.name}
               </span>{" "}
-              only
+              {t("dashboard.only")}
             </>
           )}
         </p>
@@ -58,10 +59,10 @@ export function DashboardGrid({ stats }: DashboardGridProps) {
         {stats.listId ? (
           <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
             <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-              Goals & KPIs
+              {t("dashboard.goalsKpis")}
             </h2>
             <p className="mt-3 text-sm text-[var(--muted)]">
-              Goals are workspace-wide. Select &ldquo;All projects&rdquo; to view them.
+              {t("dashboard.goalsWorkspaceWide")}
             </p>
           </section>
         ) : (

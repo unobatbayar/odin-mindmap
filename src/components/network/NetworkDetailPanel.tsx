@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { NetworkEdge, NetworkNode } from "@/types/network";
 
 interface NetworkDetailPanelProps {
@@ -24,6 +26,7 @@ export function NetworkDetailPanel({
   nodes,
   onClose,
 }: NetworkDetailPanelProps) {
+  const { t } = useI18n();
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   const incident = edges.filter((e) => e.source === node.id || e.target === node.id);
 
@@ -52,7 +55,7 @@ export function NetworkDetailPanel({
 
     return (
       <aside className="glass-strong relative z-10 flex w-full flex-col border-[var(--border)] shadow-surface-lg md:w-80 md:border-l">
-        <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+        <div className="h-0.5 bg-[var(--accent)]" />
         <PanelHeader label={node.label} onClose={onClose} />
         <div className="custom-scrollbar flex-1 space-y-5 overflow-y-auto px-5 pb-5">
           <div className="flex items-center gap-3">
@@ -63,19 +66,27 @@ export function NetworkDetailPanel({
             />
             <div>
               <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{node.label}</p>
-              <p className="text-xs text-[var(--muted)]">Person</p>
+              <p className="text-xs text-[var(--muted)]">{t("common.person")}</p>
+              {node.id.startsWith("person:") ? (
+                <Link
+                  href={`/performance/${node.id.slice("person:".length)}`}
+                  className="mt-1 inline-block text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                >
+                  {t("network.viewPerformance")}
+                </Link>
+              ) : null}
             </div>
           </div>
 
           <div>
-            <FieldLabel>Tasks assigned</FieldLabel>
+            <FieldLabel>{t("network.tasksAssigned")}</FieldLabel>
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {node.meta?.taskCount ?? 0}
             </p>
           </div>
 
           <div>
-            <FieldLabel>Shared tasks (collaborations)</FieldLabel>
+            <FieldLabel>{t("network.sharedTasks")}</FieldLabel>
             <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               {sharedTaskCount}
             </p>
@@ -83,7 +94,7 @@ export function NetworkDetailPanel({
 
           {topProjects.length > 0 && (
             <div>
-              <FieldLabel>Top projects</FieldLabel>
+              <FieldLabel>{t("network.topProjects")}</FieldLabel>
               <div className="space-y-2">
                 {topProjects.map(({ project, weight }) => (
                   <div
@@ -104,7 +115,7 @@ export function NetworkDetailPanel({
 
           {collaborators.length > 0 && (
             <div>
-              <FieldLabel>Direct collaborators</FieldLabel>
+              <FieldLabel>{t("network.directCollaborators")}</FieldLabel>
               <div className="space-y-2">
                 {collaborators.map(({ person, weight }) => (
                   <div key={person!.id} className="flex items-center gap-2.5">
@@ -117,7 +128,7 @@ export function NetworkDetailPanel({
                       {person!.label}
                     </span>
                     <span className="text-[10px] font-semibold text-[var(--muted)]">
-                      {weight} shared
+                      {t("common.shared", { count: weight })}
                     </span>
                   </div>
                 ))}
@@ -140,16 +151,16 @@ export function NetworkDetailPanel({
 
   return (
     <aside className="glass-strong relative z-10 flex w-full flex-col border-[var(--border)] shadow-surface-lg md:w-80 md:border-l">
-      <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500" />
+      <div className="h-0.5 bg-[var(--accent)]" />
       <PanelHeader label={node.label} onClose={onClose} />
       <div className="custom-scrollbar flex-1 space-y-5 overflow-y-auto px-5 pb-5">
         <div>
-          <FieldLabel>Type</FieldLabel>
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Project (list)</p>
+          <FieldLabel>{t("common.type")}</FieldLabel>
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("network.projectList")}</p>
         </div>
 
         <div>
-          <FieldLabel>Task count</FieldLabel>
+          <FieldLabel>{t("network.taskCount")}</FieldLabel>
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {node.meta?.taskCount ?? 0}
           </p>
@@ -157,7 +168,7 @@ export function NetworkDetailPanel({
 
         {collaborators.length > 0 && (
           <div>
-            <FieldLabel>Active collaborators</FieldLabel>
+            <FieldLabel>{t("network.activeCollaborators")}</FieldLabel>
             <div className="space-y-2">
               {collaborators.map(({ person, weight }) => (
                 <div key={person!.id} className="flex items-center gap-2.5">
@@ -170,7 +181,7 @@ export function NetworkDetailPanel({
                     {person!.label}
                   </span>
                   <span className="text-[10px] font-semibold text-[var(--muted)]">
-                    {weight} task{weight === 1 ? "" : "s"}
+                    {t(weight === 1 ? "common.tasksOne" : "common.tasks", { count: weight })}
                   </span>
                 </div>
               ))}
@@ -183,6 +194,7 @@ export function NetworkDetailPanel({
 }
 
 function PanelHeader({ label, onClose }: { label: string; onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between px-5 py-4">
       <h2 className="max-w-[180px] truncate text-sm font-bold text-zinc-900 dark:text-zinc-50">
@@ -192,7 +204,7 @@ function PanelHeader({ label, onClose }: { label: string; onClose: () => void })
         type="button"
         onClick={onClose}
         className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-black/5 hover:text-zinc-700 dark:hover:bg-white/8 dark:hover:text-zinc-200"
-        aria-label="Close panel"
+        aria-label={t("dashboard.closePanel")}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
           <path d="M3 3l8 8M11 3l-8 8" />

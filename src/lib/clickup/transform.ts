@@ -75,7 +75,7 @@ export function folderToNode(folder: ClickUpFolder, parentId: string): NodeRecor
       label: folder.name,
       hasChildren: true,
       childrenLoaded: false,
-      // Do not use folder.task_count — expand shows lists, not tasks.
+      // Do not use folder.task_count - expand shows lists, not tasks.
     },
   };
 }
@@ -223,7 +223,7 @@ export function tasksToNodes(
   return nodes;
 }
 
-/** Member-scoped cache ids — avoid colliding with hierarchy `list:` / `task:` nodes in All scope. */
+/** Member-scoped cache ids - avoid colliding with hierarchy `list:` / `task:` nodes in All scope. */
 function memberScopedNodeId(
   kind: "list" | "task" | "subtask",
   memberNodeId: string,

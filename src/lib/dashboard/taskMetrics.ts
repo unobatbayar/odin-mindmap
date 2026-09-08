@@ -75,7 +75,7 @@ export function parseAbsoluteDateRange(
 
 /**
  * Include a task in an absolute dashboard window if it was:
- * - created in range (always checked — even when start/due are empty),
+ * - created in range (always checked - even when start/due are empty),
  * - scheduled (start or due) in range when those dates exist,
  * - finished (done/closed) in range, or
  * - still open and created on/before the range end (existed during the period),
@@ -115,7 +115,7 @@ export function getClosedAt(task: ClickUpTask): number {
   );
 }
 
-/** ClickUp Done + Closed — finished work is not open/overdue. */
+/** ClickUp Done + Closed - finished work is not open/overdue. */
 export function toAssignee(user: ClickUpUser): DashboardAssignee {
   return {
     id: user.id,
@@ -135,6 +135,7 @@ export function toTaskSummary(task: ClickUpTask): DashboardTaskSummary {
     },
     updatedAt: task.date_updated ?? task.date_closed ?? "",
     dueDate: task.due_date,
+    dateDone: task.date_closed ?? task.date_done ?? null,
     assignees: task.assignees.map(toAssignee),
     listName: task.list?.name,
     url: task.url,
@@ -220,7 +221,7 @@ function formatWeekLabel(ts: number): string {
 export function buildWeeklyCompleted(
   tasks: ClickUpTask[],
   now: number,
-): { weekLabel: string; count: number }[] {
+): { weekStartMs: number; weekLabel: string; count: number }[] {
   const weeks: { start: number; label: string }[] = [];
   for (let i = 3; i >= 0; i--) {
     const start = startOfWeek(now - i * 7 * 86_400_000);
@@ -244,6 +245,7 @@ export function buildWeeklyCompleted(
   }
 
   return weeks.map((w) => ({
+    weekStartMs: w.start,
     weekLabel: w.label,
     count: counts.get(w.start) ?? 0,
   }));

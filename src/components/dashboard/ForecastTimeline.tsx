@@ -1,10 +1,14 @@
-import { formatDate } from "@/lib/dashboard/api";
+"use client";
+
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { TranslateFn } from "@/lib/i18n/format";
 import type {
   DashboardForecast,
   DashboardMilestoneForecast,
 } from "@/types/dashboard";
 
 interface WeeklyPoint {
+  weekStartMs: number;
   weekLabel: string;
   count: number;
 }
@@ -40,33 +44,41 @@ function startOfWeek(ts: number): number {
 
 function confidenceLabel(
   confidence: DashboardForecast["confidence"],
+  t: TranslateFn,
 ): string | null {
-  if (confidence === "low") return "Low confidence";
-  if (confidence === "none") return "Insufficient data";
+  if (confidence === "low") return t("forecast.lowConfidence");
+  if (confidence === "none") return t("forecast.insufficient");
   return null;
 }
 
 function describeForecast(
   forecast: DashboardForecast,
+  formatDate: (isoOrMs: string | number) => string,
+  t: TranslateFn,
   milestoneForecast?: DashboardMilestoneForecast | null,
 ): string {
   if (forecast.remaining <= 0) {
-    return "Backlog is clear — all open and in-progress tasks are done.";
+    return t("forecast.backlogClear");
   }
   if (!forecast.estimatedCompletion || !forecast.velocityPerWeek) {
-    return `${forecast.remaining} task${forecast.remaining === 1 ? "" : "s"} open — not enough recent completions to project a finish date yet.`;
+    return t(forecast.remaining === 1 ? "forecast.notEnoughOne" : "forecast.notEnough", {
+      count: forecast.remaining,
+    });
   }
 
   const date = formatDate(forecast.estimatedCompletion);
-  let text = `~${forecast.velocityPerWeek}/wk pace → clear by ${date}`;
+  let text = t("forecast.pace", {
+    velocity: forecast.velocityPerWeek,
+    date,
+  });
   if (forecast.weeksRemaining != null && forecast.weeksRemaining > 0) {
-    text += ` (${forecast.weeksRemaining} wk)`;
+    text += ` ${t("forecast.weeksShort", { count: forecast.weeksRemaining })}`;
   }
 
   if (milestoneForecast?.status === "at_risk") {
-    text += ` · milestone at risk`;
+    text += ` · ${t("forecast.milestoneAtRisk")}`;
   } else if (milestoneForecast?.status === "on_track") {
-    text += ` · on track for next milestone`;
+    text += ` · ${t("forecast.onTrackMilestone")}`;
   }
 
   return text;
@@ -75,6 +87,9 @@ function describeForecast(
 function buildBurndownData(
   forecast: DashboardForecast,
   weeklyCompleted: WeeklyPoint[],
+  formatWeekLabel: (ts: number) => string,
+  formatDate: (isoOrMs: string | number) => string,
+  t: TranslateFn,
 ): BurndownData {
   const now = Date.now();
   const remaining = forecast.remaining;
@@ -82,21 +97,25 @@ function buildBurndownData(
 
   const weekStarts: number[] = [];
   for (let i = weeklyCompleted.length - 1; i >= 0; i--) {
-    weekStarts.push(startOfWeek(now - i * WEEK_MS));
+    weekStarts.push(
+      weeklyCompleted[weeklyCompleted.length - 1 - i]?.weekStartMs ??
+        startOfWeek(now - i * WEEK_MS),
+    );
   }
 
   const history: SeriesPoint[] = [];
   let backfill = remaining;
   for (let i = weekStarts.length - 1; i >= 0; i--) {
     backfill += counts[i] ?? 0;
+    const weekStart = weeklyCompleted[i]?.weekStartMs ?? weekStarts[i];
     history.unshift({
       dateMs: weekStarts[i],
       remaining: backfill,
-      label: weeklyCompleted[i]?.weekLabel ?? "",
+      label: formatWeekLabel(weekStart),
     });
   }
 
-  const today: SeriesPoint = { dateMs: now, remaining, label: "Now" };
+  const today: SeriesPoint = { dateMs: now, remaining, label: t("common.now") };
 
   const goal: SeriesPoint | null =
     forecast.estimatedCompletion && remaining > 0
@@ -106,13 +125,14 @@ function buildBurndownData(
           label: formatDate(forecast.estimatedCompletion),
         }
       : remaining <= 0
-        ? { dateMs: now, remaining: 0, label: "Done" }
+        ? { dateMs: now, remaining: 0, label: t("common.done") }
         : null;
 
   return { history, today, goal };
 }
 
 function RemainingBars({ data }: { data: BurndownData }) {
+  const { t } = useI18n();
   const bars: { point: SeriesPoint; kind: "history" | "today" | "goal" }[] = [
     ...data.history.map((point) => ({ point, kind: "history" as const })),
     { point: data.today, kind: "today" },
@@ -124,7 +144,7 @@ function RemainingBars({ data }: { data: BurndownData }) {
   if (bars.length < 2) {
     return (
       <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] px-3 py-4 text-center text-xs text-[var(--muted)]">
-        Not enough history to show a trend yet.
+        {t("forecast.insufficient")}
       </div>
     );
   }
@@ -133,21 +153,21 @@ function RemainingBars({ data }: { data: BurndownData }) {
     <div className="mt-3 rounded-xl border border-[var(--border-strong)] glass-inset p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-          Remaining over time
+          {t("forecast.overTime")}
         </p>
         <div className="flex items-center gap-3 text-[10px] text-[var(--muted)]">
           <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-sm bg-gradient-to-t from-indigo-600 to-indigo-400" />
-            Past
+            <span className="h-2 w-2 rounded-sm bg-gradient-to-t from-[var(--accent)] to-[var(--accent-end)]" />
+            {t("forecast.past")}
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-2 rounded-sm ring-2 ring-indigo-500 bg-indigo-400" />
-            Now
+            <span className="h-2 w-2 rounded-sm ring-2 ring-[var(--accent)] bg-[var(--accent-end)]" />
+            {t("common.now")}
           </span>
           {data.goal && (
             <span className="inline-flex items-center gap-1">
-              <span className="h-2 w-2 rounded-sm border border-dashed border-violet-400 bg-violet-400/30" />
-              Goal
+              <span className="h-2 w-2 rounded-sm border border-dashed border-sky-400 bg-sky-400/30" />
+              {t("forecast.goal")}
             </span>
           )}
         </div>
@@ -171,24 +191,27 @@ function RemainingBars({ data }: { data: BurndownData }) {
                 <div
                   className={`w-full rounded-t-md transition-all ${
                     isGoal
-                      ? "border border-dashed border-violet-400 bg-violet-400/25"
+                      ? "border border-dashed border-sky-400 bg-sky-400/25"
                       : isToday
-                        ? "bg-gradient-to-t from-indigo-600 to-indigo-400 ring-2 ring-indigo-500/60 ring-offset-1 ring-offset-[var(--panel-solid)]"
-                        : "bg-gradient-to-t from-indigo-600 to-indigo-400"
+                        ? "bg-gradient-to-t from-[var(--accent)] to-[var(--accent-end)] ring-2 ring-[var(--accent)]/60 ring-offset-1 ring-offset-[var(--panel-solid)]"
+                        : "bg-gradient-to-t from-[var(--accent)] to-[var(--accent-end)]"
                   }`}
                   style={{
                     height: `${pct}%`,
                     minHeight: point.remaining > 0 ? "0.5rem" : "4px",
                   }}
-                  title={`${point.label}: ${point.remaining} tasks`}
+                  title={t("forecast.barTitle", {
+                    label: point.label,
+                    count: point.remaining,
+                  })}
                 />
               </div>
               <span
                 className={`w-full truncate text-center text-[9px] font-medium sm:text-[10px] ${
                   isToday
-                    ? "font-semibold text-indigo-600 dark:text-indigo-400"
+                    ? "font-semibold text-[var(--accent-foreground)]"
                     : isGoal
-                      ? "text-violet-600 dark:text-violet-400"
+                      ? "text-sky-600 dark:text-sky-400"
                       : "text-[var(--muted)]"
                 }`}
               >
@@ -207,23 +230,30 @@ export function ForecastTimeline({
   weeklyCompleted,
   milestoneForecast,
 }: ForecastTimelineProps) {
-  const badge = confidenceLabel(forecast.confidence);
-  const description = describeForecast(forecast, milestoneForecast);
-  const chartData = buildBurndownData(forecast, weeklyCompleted);
+  const { t, formatDate, formatWeekLabel } = useI18n();
+  const badge = confidenceLabel(forecast.confidence, t);
+  const description = describeForecast(forecast, formatDate, t, milestoneForecast);
+  const chartData = buildBurndownData(
+    forecast,
+    weeklyCompleted,
+    formatWeekLabel,
+    formatDate,
+    t,
+  );
 
   const finishLabel =
     forecast.estimatedCompletion && forecast.remaining > 0
       ? formatDate(forecast.estimatedCompletion)
       : forecast.remaining <= 0
-        ? "Done"
-        : "—";
+        ? t("common.done")
+        : t("common.emDash");
 
   return (
     <section className="glass-strong rounded-2xl border border-[var(--border)] p-4 shadow-surface">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-            Backlog forecast
+            {t("forecast.title")}
           </h2>
           <p className="mt-0.5 text-xs text-[var(--muted)]">{description}</p>
         </div>
@@ -235,26 +265,26 @@ export function ForecastTimeline({
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MetricPill label="Remaining" value={String(forecast.remaining)} />
+        <MetricPill label={t("forecast.remaining")} value={String(forecast.remaining)} />
         <MetricPill
-          label="Velocity"
+          label={t("forecast.velocity")}
           value={
             forecast.velocityPerWeek != null
-              ? `~${forecast.velocityPerWeek}/wk`
-              : "—"
+              ? t("forecast.velocityValue", { value: forecast.velocityPerWeek })
+              : t("common.emDash")
           }
         />
         <MetricPill
-          label="Weeks left"
+          label={t("forecast.weeksLeft")}
           value={
             forecast.weeksRemaining != null && forecast.weeksRemaining > 0
               ? `~${forecast.weeksRemaining}`
               : forecast.remaining <= 0
                 ? "0"
-                : "—"
+                : t("common.emDash")
           }
         />
-        <MetricPill label="Est. finish" value={finishLabel} />
+        <MetricPill label={t("forecast.estFinish")} value={finishLabel} />
       </div>
 
       <RemainingBars data={chartData} />

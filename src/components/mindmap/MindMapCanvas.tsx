@@ -26,6 +26,8 @@ import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
 import { useAdminUnlocked } from "@/hooks/useAdminUnlocked";
 import { makeNodeId, parseNodeId, isTaskType, type MindMapNodeData, type NodeRecord } from "@/types/mindmap";
 import { matchesStatusFilter } from "@/lib/mindmap/statusFilter";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 const nodeTypes = { mindmap: MindMapNode };
 
@@ -102,6 +104,7 @@ function isRestorableSelection(
 }
 
 function MindMapCanvasInner() {
+  const { t } = useI18n();
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
   const { adminUnlocked, unlockAdmin, lockAdmin } = useAdminUnlocked();
@@ -113,7 +116,7 @@ function MindMapCanvasInner() {
   const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>("all");
   const [error, setError] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Loading workspaces…");
+  const [loadingMessageKey, setLoadingMessageKey] = useState<MessageKey>("common.loadingWorkspaces");
   const [urlEpoch, setUrlEpoch] = useState(0);
   const [scope, setScope] = useState<MindMapScope>(() => {
     try {
@@ -171,7 +174,7 @@ function MindMapCanvasInner() {
   const handleScopeChange = useCallback((next: MindMapScope) => {
     // Leaving All for a person: drop hierarchy deep links so the load effect
     // doesn't force-reset scope back to All (cold-boot guard still applies).
-    // Also clear selection now — otherwise the selection→URL sync effect can
+    // Also clear selection now - otherwise the selection→URL sync effect can
     // rewrite the hierarchy path in the same commit (Strict Mode remount risk).
     if (next.mode === "member") {
       const path = readMindmapPath();
@@ -254,7 +257,7 @@ function MindMapCanvasInner() {
   );
 
   // Resolve accurate direct-child counts in the background for visible collapsed nodes.
-  // Does not expand nodes or change layout structure — only updates childCount (/cache).
+  // Does not expand nodes or change layout structure - only updates childCount (/cache).
   useEffect(() => {
     const targets: string[] = [];
 
@@ -266,7 +269,7 @@ function MindMapCanvasInner() {
 
       const { type } = parseNodeId(node.id);
       if (type === "task" || type === "subtask" || type === "loadmore") continue;
-      // Skip huge lists — user confirm still applies on explicit expand.
+      // Skip huge lists - user confirm still applies on explicit expand.
       if (type === "list" && (record.data.loadEstimate ?? 0) > LARGE_LIST_THRESHOLD) continue;
 
       targets.push(node.id);
@@ -323,7 +326,7 @@ function MindMapCanvasInner() {
     if (!selectedId) return;
     const record = viewCache.get(selectedId);
     if (!record) {
-      // Hidden by scope / admin lock — drop stale selection.
+      // Hidden by scope / admin lock - drop stale selection.
       setSelectedId(null);
       return;
     }
@@ -332,7 +335,7 @@ function MindMapCanvasInner() {
     }
   }, [statusFilter, selectedId, viewCache]);
 
-  // Browser back/forward — re-read the deep link and reload the graph.
+  // Browser back/forward - re-read the deep link and reload the graph.
   useEffect(() => {
     function onPopState() {
       setUrlEpoch((n) => n + 1);
@@ -367,7 +370,7 @@ function MindMapCanvasInner() {
         setInitialLoading(true);
 
         const path = readMindmapPath();
-        setLoadingMessage(path.length > 0 ? "Opening location…" : "Loading workspaces…");
+        setLoadingMessageKey(path.length > 0 ? "mindmap.openingLocation" : "common.loadingWorkspaces");
 
         // Hierarchy deep links should not stay stuck in Me-only scope.
         if (path.length > 0 && scope.mode === "member" && isHierarchyPath(path)) {
@@ -443,7 +446,7 @@ function MindMapCanvasInner() {
             mergeChildrenIntoCache(bootCache, wsId, children);
           } catch (err) {
             if (!cancelled) {
-              setError(err instanceof Error ? err.message : "Failed to load spaces");
+              setError(err instanceof Error ? err.message : t("error.loadSpaces"));
             }
           }
         }
@@ -486,7 +489,7 @@ function MindMapCanvasInner() {
             mergeChildrenIntoCache(bootCache, memberId, memberChildren);
             bootLimits.set(memberId, TASK_PAGE_SIZE);
           } catch {
-            // ignore — member scope still usable without children
+            // ignore - member scope still usable without children
           }
         }
 
@@ -583,13 +586,13 @@ function MindMapCanvasInner() {
           setSelectedId(null);
           fitOnNextLayout.current = true;
           if (path.length > 0) {
-            // Stale / out-of-scope deep link — drop it so we don't loop on a bad path.
+            // Stale / out-of-scope deep link - drop it so we don't loop on a bad path.
             writeMindmapPath([]);
           }
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load workspaces");
+          setError(err instanceof Error ? err.message : t("error.loadWorkspaces"));
           restoreAttemptedRef.current = true;
         }
       } finally {
@@ -604,7 +607,7 @@ function MindMapCanvasInner() {
     return () => {
       cancelled = true;
     };
-  }, [scope, adminUnlocked, activeTeamId, wsLoading, resetGraph, setTeamId, urlEpoch]);
+  }, [scope, adminUnlocked, activeTeamId, wsLoading, resetGraph, setTeamId, urlEpoch, t]);
 
   // Auto fit / recenter after layout changes
   useEffect(() => {
@@ -675,7 +678,7 @@ function MindMapCanvasInner() {
       loadEstimate > LARGE_LIST_THRESHOLD
     ) {
       const confirmed = window.confirm(
-        `This list has ${loadEstimate} tasks. Loading may take a moment. Continue?`,
+        t("mindmap.largeListConfirm", { count: loadEstimate }),
       );
       if (!confirmed) return false;
     }
@@ -708,7 +711,7 @@ function MindMapCanvasInner() {
       return true;
     } catch (err) {
       if (!opts?.quiet) {
-        setError(err instanceof Error ? err.message : "Failed to load children");
+        setError(err instanceof Error ? err.message : t("error.loadChildren"));
       }
       return false;
     } finally {
@@ -718,7 +721,7 @@ function MindMapCanvasInner() {
         return next;
       });
     }
-  }, []);
+  }, [t]);
 
   // Keep the URL in sync with the current selection (shareable + refresh-safe).
   useEffect(() => {
@@ -805,7 +808,7 @@ function MindMapCanvasInner() {
             listId: nodeData.addTaskListId,
             parentNodeId: node.id,
             parentTaskId: nodeData.addTaskParentTaskId,
-            title: nodeData.addTaskParentTaskId ? "New subtask" : "New task",
+            title: nodeData.addTaskParentTaskId ? t("mindmap.newSubtask") : t("mindmap.newTask"),
           });
           setSelectedId(node.id);
         }
@@ -820,7 +823,7 @@ function MindMapCanvasInner() {
 
       setSelectedId(node.id);
     },
-    [toggleExpand, loadMoreTasks, expandedIds],
+    [toggleExpand, loadMoreTasks, expandedIds, t],
   );
 
   const onNodeDoubleClick: NodeMouseHandler = useCallback(
@@ -949,7 +952,7 @@ function MindMapCanvasInner() {
       const parent = cacheRef.current.get(parentNodeId);
       const listId = parent?.data.listId as string | undefined;
       if (!parent || !listId || !isTaskType(parent.data.type)) {
-        throw new Error("Cannot add subtask to this node");
+        throw new Error(t("error.cannotAddSubtask"));
       }
 
       const { node: created } = await createTask(listId, {
@@ -985,7 +988,7 @@ function MindMapCanvasInner() {
       setSelectedId(newRecord.id);
       focusAfterLayoutRef.current = { nodeId: parentNodeId, mode: "subtree" };
     },
-    [],
+    [t],
   );
 
   return (
@@ -1016,7 +1019,7 @@ function MindMapCanvasInner() {
             onClick={() => setError(null)}
             className="shrink-0 rounded-lg px-2 py-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30"
           >
-            Dismiss
+            {t("error.dismiss")}
           </button>
         </div>
       )}
@@ -1026,7 +1029,7 @@ function MindMapCanvasInner() {
           {initialLoading ? (
             <div className="canvas-bg flex h-full flex-col items-center justify-center gap-4">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--accent)]" />
-              <p className="text-sm font-medium text-[var(--muted)]">{loadingMessage}</p>
+              <p className="text-sm font-medium text-[var(--muted)]">{t(loadingMessageKey)}</p>
             </div>
           ) : (
             <ReactFlow
@@ -1048,8 +1051,8 @@ function MindMapCanvasInner() {
               <svg style={{ position: "absolute", width: 0, height: 0 }}>
                 <defs>
                   <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#a855f7" />
+                    <stop offset="0%" stopColor="var(--accent)" />
+                    <stop offset="100%" stopColor="var(--accent-end)" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -1084,7 +1087,7 @@ function MindMapCanvasInner() {
 
       <CreateTaskDialog
         open={createTaskContext !== null}
-        title={createTaskContext?.title ?? "New task"}
+        title={createTaskContext?.title ?? t("mindmap.newTask")}
         onClose={() => setCreateTaskContext(null)}
         onCreate={handleTaskCreated}
         members={activeTeamId ? members.filter((m) => m.teamId === activeTeamId) : members}

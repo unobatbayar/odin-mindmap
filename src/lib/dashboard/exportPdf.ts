@@ -3,7 +3,7 @@ import type { Content, TDocumentDefinitions, TableCell } from "pdfmake/interface
 
 export type ExportLocale = "en" | "mn";
 
-function formatRangeLabel(from: string, to: string): string {
+function formatRangeLabel(from: string, to: string, locale: ExportLocale): string {
   const parse = (value: string) => {
     const [y, m, d] = value.split("-").map(Number);
     if (!y || !m || !d) return null;
@@ -13,13 +13,14 @@ function formatRangeLabel(from: string, to: string): string {
   const fromDate = parse(from);
   const toDate = parse(to);
   if (!fromDate || !toDate) return `${from} – ${to}`;
+  const loc = locale === "mn" ? "mn-MN" : "en-US";
   const sameYear = fromDate.getFullYear() === toDate.getFullYear();
-  const fromLabel = fromDate.toLocaleDateString("en-US", {
+  const fromLabel = fromDate.toLocaleDateString(loc, {
     month: "short",
     day: "numeric",
     ...(sameYear ? {} : { year: "numeric" }),
   });
-  const toLabel = toDate.toLocaleDateString("en-US", {
+  const toLabel = toDate.toLocaleDateString(loc, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -66,6 +67,7 @@ type Copy = {
   recentCompleted: string;
   task: string;
   list: string;
+  completedOn: string;
   footer: string;
 };
 
@@ -109,7 +111,8 @@ const COPY: Record<ExportLocale, Copy> = {
     recentCompleted: "Recently completed",
     task: "Task",
     list: "List",
-    footer: "Confidential — generated from Odin Mindmap",
+    completedOn: "Completed",
+    footer: "Confidential. Generated from Odin Mindmap",
   },
   mn: {
     title: "Хяналтын самбарын тайлан",
@@ -150,18 +153,19 @@ const COPY: Record<ExportLocale, Copy> = {
     recentCompleted: "Саяхан дууссан",
     task: "Даалгавар",
     list: "Жагсаалт",
-    footer: "Нууцлалтай — Odin Mindmap-аас үүсгэсэн",
+    completedOn: "Дууссан огноо",
+    footer: "Нууцлалтай. Odin Mindmap-аас үүсгэсэн",
   },
 };
 
 function formatDate(isoOrMs: string | null | undefined, locale: ExportLocale): string {
-  if (!isoOrMs) return "—";
+  if (!isoOrMs) return "-";
   const ms = Number(isoOrMs);
   const d =
     Number.isFinite(ms) && ms > 1e10
       ? new Date(ms)
       : new Date(isoOrMs.includes("T") ? isoOrMs : `${isoOrMs}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString(locale === "mn" ? "mn-MN" : "en-US", {
     year: "numeric",
     month: "short",
@@ -253,7 +257,7 @@ function buildDocDefinition(
 ): TDocumentDefinitions {
   const t = COPY[locale];
   const period =
-    stats.from && stats.to ? formatRangeLabel(stats.from, stats.to) : t.allTime;
+    stats.from && stats.to ? formatRangeLabel(stats.from, stats.to, locale) : t.allTime;
   const project = options?.projectName ?? t.allProjects;
   const { totals, forecast, teamWorkload, milestones, goals, recentActivity } =
     stats;
@@ -261,11 +265,11 @@ function buildDocDefinition(
   const eta =
     forecast.estimatedCompletion
       ? formatDate(forecast.estimatedCompletion, locale)
-      : "—";
+      : "-";
   const velocity =
     forecast.velocityPerWeek != null
       ? `${forecast.velocityPerWeek}${t.perWeek}`
-      : "—";
+      : "-";
 
   const content: Content[] = [
     {
@@ -303,7 +307,7 @@ function buildDocDefinition(
           x2: 515,
           y2: 0,
           lineWidth: 2,
-          lineColor: "#312e81",
+          lineColor: "#0071e3",
         },
       ],
       margin: [0, 0, 0, 8],
@@ -378,11 +382,15 @@ function buildDocDefinition(
     content.push(
       sectionHeading(t.recentCompleted),
       table(
-        [t.task, t.list],
+        [t.task, t.list, t.completedOn],
         recentActivity.completed
           .slice(0, 15)
-          .map((task) => [task.name, task.listName ?? "—"]),
-        ["*", 120],
+          .map((task) => [
+            task.name,
+            task.listName ?? "-",
+            formatDate(task.dateDone, locale),
+          ]),
+        ["*", 100, 80],
         2,
       ),
     );
@@ -408,7 +416,7 @@ function buildDocDefinition(
       brand: {
         fontSize: 9,
         bold: true,
-        color: "#6366f1",
+        color: "#0071e3",
         characterSpacing: 1,
       },
       title: {
@@ -423,7 +431,7 @@ function buildDocDefinition(
       section: {
         fontSize: 10,
         bold: true,
-        color: "#4338ca",
+        color: "#0071e3",
         characterSpacing: 0.6,
       },
       kpiLabel: {

@@ -9,16 +9,23 @@ import {
   NODE_WIDTH_COMPACT,
   TYPE_COLORS,
 } from "@/lib/mindmap/constants";
-import type { MindMapNodeData } from "@/types/mindmap";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import { bcp47 } from "@/lib/i18n/locale";
+import type { MessageKey } from "@/lib/i18n/messages";
+import type { MindMapNodeData, NodeType } from "@/types/mindmap";
 
-function formatDueDate(ms: string | null | undefined): string | null {
+function formatDueDate(ms: string | null | undefined, locale: "en" | "mn"): string | null {
   if (!ms) return null;
   const date = new Date(parseInt(ms, 10));
   if (isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(undefined, {
+  return date.toLocaleDateString(bcp47(locale), {
     month: "short",
     day: "numeric",
-  }).format(date);
+  });
+}
+
+function nodeTypeKey(type: NodeType): MessageKey {
+  return `nodeType.${type}` as MessageKey;
 }
 
 function ChevronIcon({ expanded }: { expanded?: boolean }) {
@@ -58,10 +65,11 @@ function TeamworkIcon() {
 }
 
 function CollaborationBadge({ assigneeCount }: { assigneeCount: number }) {
+  const { t } = useI18n();
   return (
     <span
       className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] bg-black/[0.03] text-[var(--muted)] dark:bg-white/[0.06]"
-      title={`Collaboration · ${assigneeCount} people`}
+      title={t("mindmap.collabTitle", { count: assigneeCount })}
     >
       <TeamworkIcon />
     </span>
@@ -69,12 +77,20 @@ function CollaborationBadge({ assigneeCount }: { assigneeCount: number }) {
 }
 
 function MindMapNodeComponent({ data }: NodeProps) {
+  const { t, locale } = useI18n();
   const node = data as MindMapNodeData;
   const isTask = node.type === "task" || node.type === "subtask";
   const isMember = node.type === "member";
   const isLoadMore = node.type === "loadmore";
-  const accent = isLoadMore ? "#6366f1" : (TYPE_COLORS[node.type] ?? "#6366f1");
-  const due = formatDueDate(node.dueDate);
+  const accent = isLoadMore ? "#0071e3" : (TYPE_COLORS[node.type] ?? "#0071e3");
+  const due = formatDueDate(node.dueDate, locale);
+  const count = node.remainingCount ?? 0;
+  const displayLabel =
+    node.type === "people"
+      ? t("common.people")
+      : node.type === "loadmore"
+        ? t(count === 1 ? "mindmap.showMoreTasksOne" : "mindmap.showMoreTasks", { count })
+        : node.label;
   const widthPx = node.compact ? NODE_WIDTH_COMPACT : NODE_WIDTH;
   const assigneeCount = node.assignees?.length ?? 0;
   const isCollab = isTask && assigneeCount > 1;
@@ -92,14 +108,14 @@ function MindMapNodeComponent({ data }: NodeProps) {
         <button
           type="button"
           data-load-more
-          className="group rounded-xl border border-dashed border-indigo-400/60 bg-indigo-50/80 px-3 py-2.5 text-sm font-semibold text-indigo-600 backdrop-blur-sm transition-all duration-200 hover:border-indigo-400 hover:bg-indigo-100/80 hover:shadow-md dark:border-indigo-500/40 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:border-indigo-400/60 dark:hover:bg-indigo-950/50"
+          className="group rounded-xl border border-dashed border-[var(--accent)]/40 bg-[var(--accent-soft)]/80 px-3 py-2.5 text-sm font-semibold text-[var(--accent-foreground)] backdrop-blur-sm transition-all duration-200 hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:shadow-md dark:border-[var(--accent)]/40 dark:bg-[var(--accent-soft)] dark:text-[var(--accent-foreground)] dark:hover:border-[var(--accent)]/60"
           style={{ width: widthPx }}
         >
           <span className="flex items-center justify-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-60 group-hover:opacity-100 transition-opacity">
               <path d="M8 3v10M3 8h10" />
             </svg>
-            {node.label}
+            {displayLabel}
           </span>
         </button>
         <Handle type="source" position={Position.Right} className="!bg-transparent !w-0 !h-0 !border-0" />
@@ -128,7 +144,7 @@ function MindMapNodeComponent({ data }: NodeProps) {
         <div className={node.compact ? "px-2.5 py-2" : "px-3 py-2.5"}>
           <div className="flex items-start gap-2">
             {node.hasChildren && (
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors group-hover/node:text-indigo-500 dark:group-hover/node:text-indigo-400">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors group-hover/node:text-[var(--accent)] dark:group-hover/node:text-[var(--accent-foreground)]">
                 {node.isLoading ? (
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-200 border-t-[var(--accent)]" />
                 ) : (
@@ -139,9 +155,9 @@ function MindMapNodeComponent({ data }: NodeProps) {
             <div className="min-w-0 flex-1">
               <p
                 className={`line-clamp-2 font-semibold leading-tight text-zinc-900 dark:text-zinc-50 ${node.compact ? "text-xs" : "text-sm"}`}
-                title={node.label}
+                title={displayLabel}
               >
-                {node.label}
+                {displayLabel}
               </p>
               {showMetaRow && (
                 <div className="mt-1 flex min-w-0 items-center gap-1.5">
@@ -151,11 +167,16 @@ function MindMapNodeComponent({ data }: NodeProps) {
                         className="inline-flex shrink-0 rounded px-1 py-px text-[9px] font-bold uppercase tracking-wider text-white"
                         style={{ backgroundColor: accent }}
                       >
-                        {node.type}
+                        {t(nodeTypeKey(node.type))}
                       </span>
                       {node.childCount != null && node.childCount > 0 && !node.isExpanded && (
                         <span className="shrink-0 text-[10px] font-medium text-[var(--muted)]">
-                          {node.childCount} items
+                          {t(
+                            node.childCount === 1
+                              ? "mindmap.itemCountOne"
+                              : "mindmap.itemCount",
+                            { count: node.childCount },
+                          )}
                         </span>
                       )}
                     </>
@@ -171,7 +192,7 @@ function MindMapNodeComponent({ data }: NodeProps) {
                         <button
                           type="button"
                           data-add-inline
-                          title={node.addTaskParentTaskId ? "Add subtask" : "Add task"}
+                          title={node.addTaskParentTaskId ? t("mindmap.addSubtask") : t("mindmap.addTask")}
                           className="inline-flex h-6 w-6 items-center justify-center rounded-lg border border-emerald-400/40 bg-emerald-50/70 text-emerald-700 shadow-sm transition-colors hover:bg-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-300 dark:hover:bg-emerald-950/50"
                         >
                           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

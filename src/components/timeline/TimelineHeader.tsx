@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { getHeaderTicks } from "@/lib/timeline/dateTicks";
 import { msToPx } from "@/lib/timeline/viewport";
 import { HEADER_MAJOR_HEIGHT, HEADER_MINOR_HEIGHT } from "@/lib/timeline/constants";
+import type { Locale } from "@/lib/i18n/locale";
 import type { LodTier } from "@/types/timelineViewport";
 
 interface TimelineHeaderProps {
@@ -11,6 +12,7 @@ interface TimelineHeaderProps {
   viewEndMs: number;
   pxPerDay: number;
   lodTier: LodTier;
+  locale: Locale;
 }
 
 /**
@@ -18,12 +20,15 @@ interface TimelineHeaderProps {
  * gutter corner and vertical stickiness itself are handled by the parent
  * TimelineCanvas layout). Every tick is individually positioned via
  * `transform: translateX(...)` rather than a shared transform on an
- * ancestor — this keeps this component's own descendants free of any
+ * ancestor - this keeps this component's own descendants free of any
  * containing-block interference, and lets the browser composite each tick
  * on the GPU instead of triggering layout on every pan/zoom frame.
  */
-export function TimelineHeader({ viewStartMs, viewEndMs, pxPerDay, lodTier }: TimelineHeaderProps) {
-  const ticks = useMemo(() => getHeaderTicks(viewStartMs, viewEndMs, lodTier), [viewStartMs, viewEndMs, lodTier]);
+export function TimelineHeader({ viewStartMs, viewEndMs, pxPerDay, lodTier, locale }: TimelineHeaderProps) {
+  const ticks = useMemo(
+    () => getHeaderTicks(viewStartMs, viewEndMs, lodTier, locale),
+    [viewStartMs, viewEndMs, lodTier, locale],
+  );
 
   return (
     <div className="relative" style={{ height: HEADER_MAJOR_HEIGHT + HEADER_MINOR_HEIGHT }}>

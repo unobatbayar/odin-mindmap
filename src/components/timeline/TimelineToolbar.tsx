@@ -1,14 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import type { TimelineZoomPreset } from "@/types/timelineViewport";
 
-const PRESETS: { value: TimelineZoomPreset; label: string }[] = [
-  { value: "day", label: "Day" },
-  { value: "week", label: "Week" },
-  { value: "month", label: "Month" },
-  { value: "quarter", label: "Quarter" },
-  { value: "year", label: "Year" },
+const PRESETS: { value: TimelineZoomPreset; labelKey: MessageKey }[] = [
+  { value: "day", labelKey: "date.day" },
+  { value: "week", labelKey: "date.week" },
+  { value: "month", labelKey: "date.month" },
+  { value: "quarter", labelKey: "date.quarter" },
+  { value: "year", labelKey: "date.year" },
 ];
 
 function IconChevronLeft() {
@@ -68,6 +70,7 @@ export function TimelineToolbar({
   onNext,
   onToday,
 }: TimelineToolbarProps) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-2.5">
       <div className="min-w-0">
@@ -76,7 +79,7 @@ export function TimelineToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="glass-solid flex rounded-xl border border-[var(--border-strong)] p-0.5" role="group" aria-label="Zoom preset">
+        <div className="glass-solid flex rounded-xl border border-[var(--border-strong)] p-0.5" role="group" aria-label={t("timeline.zoomPreset")}>
           {PRESETS.map((preset) => (
             <button
               key={preset.value}
@@ -85,32 +88,32 @@ export function TimelineToolbar({
               aria-pressed={activePreset === preset.value}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 activePreset === preset.value
-                  ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
                   : "text-[var(--muted)] hover:text-zinc-700 dark:hover:text-zinc-200"
               }`}
             >
-              {preset.label}
+              {t(preset.labelKey)}
             </button>
           ))}
         </div>
 
         <div className="glass-solid flex items-center rounded-xl border border-[var(--border-strong)] p-0.5">
-          <Button variant="ghost" size="icon" onClick={onZoomOut} title="Zoom out">
+          <Button variant="ghost" size="icon" onClick={onZoomOut} title={t("mindmap.zoomOut")}>
             <IconZoomOut />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onZoomIn} title="Zoom in">
+          <Button variant="ghost" size="icon" onClick={onZoomIn} title={t("mindmap.zoomIn")}>
             <IconZoomIn />
           </Button>
         </div>
 
         <div className="glass-solid flex items-center rounded-xl border border-[var(--border-strong)] p-0.5">
-          <Button variant="ghost" size="icon" onClick={onPrev} title="Previous period">
+          <Button variant="ghost" size="icon" onClick={onPrev} title={t("timeline.prevPeriod")}>
             <IconChevronLeft />
           </Button>
           <Button variant="ghost" size="sm" onClick={onToday}>
-            Today
+            {t("common.today")}
           </Button>
-          <Button variant="ghost" size="icon" onClick={onNext} title="Next period">
+          <Button variant="ghost" size="icon" onClick={onNext} title={t("timeline.nextPeriod")}>
             <IconChevronRight />
           </Button>
         </div>

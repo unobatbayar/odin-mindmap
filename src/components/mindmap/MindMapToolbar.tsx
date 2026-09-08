@@ -1,19 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { useMemo, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { HeaderSelect } from "@/components/ui/Select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   AppHeader,
   HeaderContextGroup,
   HeaderControl,
   headerDropdownTriggerClass,
-  headerSelectClass,
 } from "@/components/layout/AppHeader";
 import { HeaderMoreMenu, type HeaderMoreItem } from "@/components/layout/HeaderMoreMenu";
-import { useTheme } from "@/components/ui/ThemeProvider";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { AdminUnlockError } from "@/hooks/useAdminUnlocked";
 import { StatusFilterDropdown } from "./StatusFilterDropdown";
+import { Check, ChevronDown } from "lucide-react";
 import type { TaskStatusFilter } from "@/lib/mindmap/constants";
 
 export type MindMapScope =
@@ -45,7 +54,7 @@ interface MindMapToolbarProps {
   scope: MindMapScope;
   onScopeChange: (scope: MindMapScope) => void;
   adminUnlocked: boolean;
-  onAdminUnlock: (pin: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+  onAdminUnlock: (pin: string) => Promise<{ ok: true } | { ok: false; error: AdminUnlockError }>;
   onAdminLock: () => void;
   members: MemberOption[];
 }
@@ -78,143 +87,6 @@ function IconFit() {
   );
 }
 
-function IconSun() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-      <circle cx="8" cy="8" r="3" />
-      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" />
-    </svg>
-  );
-}
-
-function IconMoon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13.5 9.5a5.5 5.5 0 01-7-7 5.5 5.5 0 107 7z" />
-    </svg>
-  );
-}
-
-function IconLock({ unlocked }: { unlocked: boolean }) {
-  return unlocked ? (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 7H4a2 2 0 00-2 2v3a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2z" />
-      <path d="M5.5 7V5.5A2.5 2.5 0 018 3a2.5 2.5 0 012.5 2.5V7" />
-    </svg>
-  ) : (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 7H4a2 2 0 00-2 2v3a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2z" />
-      <path d="M6 7V5.6A2.7 2.7 0 018.7 3c.8 0 1.5.3 2 .8" />
-      <path d="M3 3l10 10" />
-    </svg>
-  );
-}
-
-function AdminLockControl({
-  adminUnlocked,
-  onAdminUnlock,
-  onAdminLock,
-}: {
-  adminUnlocked: boolean;
-  onAdminUnlock: (pin: string) => Promise<{ ok: true } | { ok: false; error: string }>;
-  onAdminLock: () => void;
-}) {
-  const [pinOpen, setPinOpen] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState<string | null>(null);
-  const [unlocking, setUnlocking] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!pinOpen) {
-      setPin("");
-      setPinError(null);
-    }
-  }, [pinOpen]);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setPinOpen(false);
-    }
-    if (pinOpen) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [pinOpen]);
-
-  const tryUnlock = async () => {
-    setPinError(null);
-    setUnlocking(true);
-    try {
-      const result = await onAdminUnlock(pin);
-      if (result.ok) {
-        setPinOpen(false);
-      } else {
-        setPinError(result.error);
-      }
-    } finally {
-      setUnlocking(false);
-    }
-  };
-
-  return (
-    <div ref={ref} className="relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          if (adminUnlocked) {
-            onAdminLock();
-            return;
-          }
-          setPinOpen((v) => !v);
-        }}
-        title={adminUnlocked ? "Lock admin" : "Unlock admin"}
-        aria-label={adminUnlocked ? "Lock admin" : "Unlock admin"}
-        className={
-          adminUnlocked
-            ? "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-            : undefined
-        }
-      >
-        <IconLock unlocked={adminUnlocked} />
-      </Button>
-
-      {pinOpen && !adminUnlocked && (
-        <div className="absolute right-0 top-full z-50 mt-1.5 w-[240px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg">
-          <p className="px-1 pb-2 text-xs font-medium text-zinc-700 dark:text-zinc-200">
-            Enter admin PIN
-          </p>
-          <div className="space-y-2 px-1">
-            <Input
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              placeholder="PIN"
-              type="password"
-              className="py-1.5 text-xs"
-              onKeyDown={(e) => {
-                if (e.key !== "Enter" || unlocking) return;
-                void tryUnlock();
-              }}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              disabled={unlocking}
-              onClick={() => void tryUnlock()}
-            >
-              {unlocking ? "Unlocking…" : "Unlock"}
-            </Button>
-            {pinError && <p className="px-0.5 text-[11px] text-red-500">{pinError}</p>}
-            <p className="px-0.5 text-[11px] text-[var(--muted)]">
-              Unlock enables editing and the People branch.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ScopeDropdown({
   scope,
   onChange,
@@ -224,111 +96,65 @@ function ScopeDropdown({
   onChange: (s: MindMapScope) => void;
   members: MemberOption[];
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter((m) => m.label.toLowerCase().includes(q));
-  }, [members, query]);
-
-  const label = scope.mode === "all" ? "All" : scope.label;
+  const label = scope.mode === "all" ? t("common.all") : scope.label;
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={headerDropdownTriggerClass}
-        title="Scope"
-      >
-        {scope.mode === "member" ? (
-          <Avatar name={scope.label} src={scope.profilePicture} size={18} />
-        ) : (
-          <span className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M2.5 3.5h9M2.5 7h9M2.5 10.5h9" />
-            </svg>
-          </span>
-        )}
-        <span className="max-w-[120px] truncate sm:max-w-[140px]">{label}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          className={`text-[var(--muted)] transition-transform duration-150 ${open ? "rotate-180" : ""}`}
-        >
-          <path d="M3 4.5L6 7.5L9 4.5" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1.5 w-[min(280px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-2 shadow-surface-lg sm:left-auto sm:right-0">
-          <div className="px-1 pb-2">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search people…"
-              className="py-1.5 text-xs"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              onChange({ mode: "all" });
-              setOpen(false);
-              setQuery("");
-            }}
-            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors ${
-              scope.mode === "all"
-                ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
-                : "text-zinc-700 hover:bg-black/[0.04] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-            }`}
-          >
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button type="button" className={headerDropdownTriggerClass} title={t("common.scope")}>
+          {scope.mode === "member" ? (
+            <Avatar name={scope.label} src={scope.profilePicture} size={18} />
+          ) : (
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-300">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                 <path d="M2.5 3.5h9M2.5 7h9M2.5 10.5h9" />
               </svg>
             </span>
-            <span className="flex-1">All</span>
-            {scope.mode === "all" && (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-indigo-500">
-                <path d="M3 7l3 3 5-5.5" />
-              </svg>
-            )}
-          </button>
-
-          <div className="my-2 h-px bg-[var(--border)]" />
-
-          <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
-            {filtered.length === 0 ? (
-              <p className="px-2.5 py-3 text-xs text-[var(--muted)]">No matches</p>
-            ) : (
-              filtered.map((m) => {
+          )}
+          <span className="max-w-[120px] truncate sm:max-w-[140px]">{label}</span>
+          <ChevronDown className="h-3 w-3 text-[var(--muted)]" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[min(280px,calc(100vw-2rem))] p-0"
+        align="end"
+      >
+        <Command>
+          <CommandInput placeholder={t("common.searchPeople")} />
+          <CommandList>
+            <CommandEmpty>{t("common.noMatches")}</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="all"
+                onSelect={() => {
+                  onChange({ mode: "all" });
+                  setOpen(false);
+                }}
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M2.5 3.5h9M2.5 7h9M2.5 10.5h9" />
+                  </svg>
+                </span>
+                <span className="flex-1">{t("common.all")}</span>
+                {scope.mode === "all" ? (
+                  <Check className="h-3.5 w-3.5 text-blue-500" />
+                ) : null}
+              </CommandItem>
+            </CommandGroup>
+            <CommandGroup heading={t("common.people")}>
+              {members.map((m) => {
                 const selected =
                   scope.mode === "member" &&
                   scope.teamId === m.teamId &&
                   scope.userId === m.userId;
                 return (
-                  <button
+                  <CommandItem
                     key={`${m.teamId}:${m.userId}`}
-                    type="button"
-                    onClick={() => {
+                    value={`${m.label} ${m.userId}`}
+                    onSelect={() => {
                       onChange({
                         mode: "member",
                         teamId: m.teamId,
@@ -337,29 +163,21 @@ function ScopeDropdown({
                         profilePicture: m.profilePicture,
                       });
                       setOpen(false);
-                      setQuery("");
                     }}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors ${
-                      selected
-                        ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
-                        : "text-zinc-700 hover:bg-black/[0.04] dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-                    }`}
                   >
                     <Avatar name={m.label} src={m.profilePicture} size={22} />
                     <span className="flex-1 truncate">{m.label}</span>
-                    {selected && (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-indigo-500">
-                        <path d="M3 7l3 3 5-5.5" />
-                      </svg>
-                    )}
-                  </button>
+                    {selected ? (
+                      <Check className="h-3.5 w-3.5 text-blue-500" />
+                    ) : null}
+                  </CommandItem>
                 );
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -375,82 +193,60 @@ export function MindMapToolbar({
   onTeamChange,
   scope,
   onScopeChange,
-  adminUnlocked,
-  onAdminUnlock,
-  onAdminLock,
   members,
 }: MindMapToolbarProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { t } = useI18n();
 
   const moreItems: HeaderMoreItem[] = useMemo(
     () => [
       {
         id: "zoom-out",
-        label: "Zoom out",
+        label: t("mindmap.zoomOut"),
         icon: <IconZoomOut />,
         shortcut: "−",
         onClick: onZoomOut,
       },
       {
         id: "zoom-in",
-        label: "Zoom in",
+        label: t("mindmap.zoomIn"),
         icon: <IconZoomIn />,
         shortcut: "+",
         onClick: onZoomIn,
       },
       {
         id: "fit",
-        label: "Fit view",
+        label: t("mindmap.fitView"),
         icon: <IconFit />,
         shortcut: "0",
         onClick: onFitView,
       },
-      {
-        id: "theme",
-        label: theme === "dark" ? "Light mode" : "Dark mode",
-        icon: theme === "dark" ? <IconSun /> : <IconMoon />,
-        onClick: toggleTheme,
-      },
     ],
-    [onFitView, onZoomIn, onZoomOut, theme, toggleTheme],
+    [onFitView, onZoomIn, onZoomOut, t],
   );
 
   return (
     <AppHeader
       filters={
         <HeaderContextGroup>
-          <HeaderControl label="Workspace" grouped>
-            <select
+          <HeaderControl label={t("common.workspace")} grouped>
+            <HeaderSelect
               value={activeTeamId ?? ""}
-              onChange={(e) => onTeamChange(e.target.value)}
+              onValueChange={onTeamChange}
               disabled={wsLoading || workspaces.length === 0}
-              className={headerSelectClass}
-              aria-label="Workspace"
-            >
-              {workspaces.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.label}
-                </option>
-              ))}
-            </select>
+              aria-label={t("common.workspace")}
+              options={workspaces.map((w) => ({ value: w.id, label: w.label }))}
+            />
           </HeaderControl>
-          <HeaderControl label="Scope" grouped>
+          <HeaderControl label={t("common.scope")} grouped>
             <ScopeDropdown scope={scope} onChange={onScopeChange} members={members} />
           </HeaderControl>
-          <HeaderControl label="Status" grouped>
+          <HeaderControl label={t("common.status")} grouped>
             <StatusFilterDropdown value={statusFilter} onChange={onStatusFilterChange} />
           </HeaderControl>
         </HeaderContextGroup>
       }
       actions={
-        <>
-          <AdminLockControl
-            adminUnlocked={adminUnlocked}
-            onAdminUnlock={onAdminUnlock}
-            onAdminLock={onAdminLock}
-          />
-          <HeaderMoreMenu items={moreItems} label="View options" />
-        </>
+        <HeaderMoreMenu items={moreItems} label={t("common.viewOptions")} />
       }
     />
   );

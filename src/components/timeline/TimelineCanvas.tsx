@@ -20,7 +20,15 @@ import { TimelineHeader } from "./TimelineHeader";
 import { TimelineMinimap } from "./TimelineMinimap";
 import { TimelineRowGroup } from "./TimelineRowGroup";
 import { TimelineToolbar } from "./TimelineToolbar";
-import type { TimelineBar, TimelineStats } from "@/types/timeline";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
+import type { TimelineBar, TimelineGroupBy, TimelineStats } from "@/types/timeline";
+
+const GROUP_KEYS: Record<TimelineGroupBy, MessageKey> = {
+  list: "timeline.groupList",
+  folder: "timeline.groupFolder",
+  space: "timeline.groupSpace",
+};
 
 type PackedBar = TimelineBar & { lane: number };
 
@@ -29,12 +37,13 @@ interface TimelineCanvasProps {
 }
 
 export function TimelineCanvas({ stats }: TimelineCanvasProps) {
+  const { t, locale } = useI18n();
   const [selected, setSelected] = useState<TimelineBar | null>(null);
 
   // The shared tab-page chrome sizes its content area via `min-height`
   // rather than `height`, which (per the flexbox spec's definite-size
   // rules) makes percentage heights like `h-full` fail to resolve for
-  // deeply-nested flex descendants — this component's height would
+  // deeply-nested flex descendants - this component's height would
   // silently collapse to its content size instead of filling the page.
   // Measuring and setting an explicit pixel height sidesteps that
   // entirely without touching the shared layout used by other tabs.
@@ -104,8 +113,11 @@ export function TimelineCanvas({ stats }: TimelineCanvasProps) {
   const dataExtentStart = Math.min(stats.rangeStart, viewport.viewStartMs);
   const dataExtentEnd = Math.max(stats.rangeEnd, viewport.viewEndMs);
 
-  const periodLabel = formatPeriodLabel(viewport.viewStartMs, viewport.viewEndMs, viewport.lodTier);
-  const subtitle = `${stats.bars.length} task${stats.bars.length === 1 ? "" : "s"} · grouped by ${stats.groupBy}`;
+  const periodLabel = formatPeriodLabel(viewport.viewStartMs, viewport.viewEndMs, viewport.lodTier, locale);
+  const subtitle = t(
+    stats.bars.length === 1 ? "timeline.subtitleOne" : "timeline.subtitle",
+    { count: stats.bars.length, group: t(GROUP_KEYS[stats.groupBy]) },
+  );
 
   if (stats.bars.length === 0) {
     return (
@@ -115,9 +127,9 @@ export function TimelineCanvas({ stats }: TimelineCanvasProps) {
         style={{ height: fillHeightPx ?? undefined }}
       >
         <div className="glass-strong max-w-md rounded-2xl border border-[var(--border)] p-8 text-center shadow-surface">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">No tasks with start or due dates</p>
+          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">{t("timeline.noDates")}</p>
           <p className="mt-2 text-xs text-[var(--muted)]">
-            Add start_date or due_date on tasks in ClickUp to see them on the timeline.
+            {t("timeline.noDatesHint")}
           </p>
         </div>
       </div>
@@ -148,6 +160,7 @@ export function TimelineCanvas({ stats }: TimelineCanvasProps) {
                 viewEndMs={viewport.viewEndMs}
                 pxPerDay={viewport.pxPerDay}
                 lodTier={viewport.lodTier}
+                locale={locale}
               />
             </div>
           </div>
@@ -180,6 +193,7 @@ export function TimelineCanvas({ stats }: TimelineCanvasProps) {
                 pxPerDay={viewport.pxPerDay}
                 lodTier={viewport.lodTier}
                 heightPx={totalBodyHeight}
+                locale={locale}
               />
               {rowLayout.map(({ label, top, height }) => (
                 <TimelineRowGroup

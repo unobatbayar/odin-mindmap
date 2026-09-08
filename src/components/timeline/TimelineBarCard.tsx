@@ -14,13 +14,13 @@ interface TimelineBarCardProps {
 
 /**
  * A single event card. Positioned absolutely by screen px (computed by the
- * caller via msToPx) rather than one of a handful of discrete SVG widths —
+ * caller via msToPx) rather than one of a handful of discrete SVG widths  - 
  * width now varies continuously with zoom, so plain `text-overflow:
  * ellipsis` replaces the old manual character-slicing.
  */
 export function TimelineBarCard({ bar, x1, x2, lane, selected, onSelect }: TimelineBarCardProps) {
   const width = Math.max(x2 - x1, 1);
-  const color = bar.task.status.color || "#818cf8";
+  const color = bar.task.status.color || "#0071e3";
   const showLabel = width >= 36;
 
   return (
@@ -29,7 +29,7 @@ export function TimelineBarCard({ bar, x1, x2, lane, selected, onSelect }: Timel
       data-timeline-interactive
       onClick={onSelect}
       title={bar.task.name}
-      className={`absolute flex items-center overflow-hidden rounded-md px-1.5 text-left text-[11px] font-semibold text-white shadow-sm transition-[transform,box-shadow,opacity] duration-150 ease-out hover:z-10 hover:scale-[1.03] hover:shadow-md focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 ${
+      className={`absolute flex items-center overflow-hidden rounded-md px-1.5 text-left text-[11px] font-semibold text-white shadow-sm transition-[transform,box-shadow,opacity] duration-150 ease-out hover:z-10 hover:scale-[1.03] hover:shadow-md focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500 ${
         selected ? "z-10 ring-2 ring-white ring-offset-1 ring-offset-transparent" : ""
       }`}
       style={{

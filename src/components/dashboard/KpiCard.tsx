@@ -29,7 +29,7 @@ export function KpiCard({
     interactive
       ? "cursor-pointer transition-all hover:border-[var(--border-strong)] hover:shadow-surface-lg"
       : "",
-    active ? "ring-2 ring-indigo-500/40 border-indigo-300/50 dark:border-indigo-500/40" : "",
+    active ? "ring-2 ring-blue-500/40 border-blue-300/50 dark:border-blue-500/40" : "",
   ]
     .filter(Boolean)
     .join(" ");

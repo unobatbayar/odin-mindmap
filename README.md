@@ -25,13 +25,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
-- **Hierarchy view** — Workspace → Space → Folder → List → Task → Subtask
-- **Lazy loading** — Children load on expand; large lists prompt before fetching
-- **Task details** — Status, priority, due date, assignees on each node
-- **Inline editing** — Rename tasks, update status and priority (syncs to ClickUp)
-- **Navigation** — Zoom, pan, fit-to-view, center selected node
-- **Keyboard shortcuts** — `+`/`-` zoom, `0` fit, `f` center, `Enter` expand, `Esc` deselect
-- **Dark mode** — Toggle in toolbar (persists in localStorage)
+- **Hierarchy view**: Workspace → Space → Folder → List → Task → Subtask
+- **Lazy loading**: Children load on expand; large lists prompt before fetching
+- **Task details**: Status, priority, due date, assignees on each node
+- **Inline editing**: Rename tasks, update status and priority (syncs to ClickUp)
+- **Navigation**: Zoom, pan, fit-to-view, center selected node
+- **Keyboard shortcuts**: `+`/`-` zoom, `0` fit, `f` center, `Enter` expand, `Esc` deselect
+- **Dark mode**: Toggle in toolbar (persists in localStorage)
 
 ## Architecture
 
@@ -50,7 +50,7 @@ src/
 
 **Data flow:** Client canvas → `/api/clickup/*` route handlers → ClickUp API v2. The API token never leaves the server.
 
-**State:** All UI state lives in `MindMapCanvas` — expanded nodes, selection, and a client-side cache. No external state library.
+**State:** All UI state lives in `MindMapCanvas`: expanded nodes, selection, and a client-side cache. No external state library.
 
 ## Dependencies
 

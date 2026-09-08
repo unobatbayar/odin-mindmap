@@ -31,7 +31,7 @@ function PersonNodeComponent({ id, data }: NodeProps) {
       <div
         className={`rounded-full p-0.5 transition-shadow duration-150 ${
           highlighted || focused
-            ? "ring-2 ring-indigo-500 shadow-[0_0_12px_var(--accent-glow)]"
+            ? "ring-2 ring-blue-500 shadow-[0_0_12px_var(--accent-glow)]"
             : ""
         }`}
       >
@@ -40,7 +40,7 @@ function PersonNodeComponent({ id, data }: NodeProps) {
       <span
         className={`max-w-[88px] truncate text-center text-[10px] font-semibold leading-tight ${
           highlighted || focused
-            ? "text-indigo-600 dark:text-indigo-300"
+            ? "text-blue-600 dark:text-blue-300"
             : "text-zinc-700 dark:text-zinc-300"
         }`}
       >

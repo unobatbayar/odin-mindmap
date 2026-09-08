@@ -5,6 +5,7 @@ import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { TabPageShell } from "@/components/layout/TabPageShell";
 import { TabSkeleton } from "@/components/layout/TabSkeleton";
 import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { fetchActivityStats } from "@/lib/activity/api";
 import type { DashboardProject } from "@/types/dashboard";
 import type { ActivityStats } from "@/types/activity";
@@ -18,6 +19,7 @@ function ActivityContent({
   listId: string | null;
   onProjectsLoaded: (projects: DashboardProject[]) => void;
 }) {
+  const { t } = useI18n();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ function ActivityContent({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load activity");
+          setError(err instanceof Error ? err.message : t("error.loadActivity"));
           setStats(null);
         }
       })
@@ -47,7 +49,7 @@ function ActivityContent({
     return () => {
       cancelled = true;
     };
-  }, [teamId, listId, onProjectsLoaded]);
+  }, [teamId, listId, onProjectsLoaded, t]);
 
   if (loading) return <TabSkeleton />;
   if (error) {

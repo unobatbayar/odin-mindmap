@@ -18,6 +18,8 @@ export interface DashboardTaskSummary {
   status: { label: string; color: string; type: string };
   updatedAt: string;
   dueDate?: string | null;
+  /** ClickUp date_closed / date_done when the task was finished */
+  dateDone?: string | null;
   assignees: DashboardAssignee[];
   listName?: string;
   url: string;
@@ -114,7 +116,7 @@ export interface DashboardStats {
     dueThisWeek: DashboardTaskSummary[];
   };
   teamWorkload: DashboardMemberWorkload[];
-  weeklyCompleted: { weekLabel: string; count: number }[];
+  weeklyCompleted: { weekStartMs: number; weekLabel: string; count: number }[];
   forecast: DashboardForecast;
   nextMilestoneForecast: DashboardMilestoneForecast | null;
 }

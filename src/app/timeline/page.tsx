@@ -4,6 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { TimelineCanvas } from "@/components/timeline/TimelineCanvas";
 import { TabPageShell } from "@/components/layout/TabPageShell";
 import { TabSkeleton } from "@/components/layout/TabSkeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
 import { fetchTimelineStats } from "@/lib/timeline/api";
 import type { DashboardProject } from "@/types/dashboard";
@@ -22,6 +30,7 @@ function TimelineContent({
   groupBy: TimelineGroupBy;
   onProjectsLoaded: (projects: DashboardProject[]) => void;
 }) {
+  const { t } = useI18n();
   const [stats, setStats] = useState<TimelineStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +51,7 @@ function TimelineContent({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load timeline");
+          setError(err instanceof Error ? err.message : t("error.loadTimeline"));
           setStats(null);
         }
       })
@@ -53,7 +62,7 @@ function TimelineContent({
     return () => {
       cancelled = true;
     };
-  }, [teamId, listId, assigneeId, groupBy, onProjectsLoaded]);
+  }, [teamId, listId, assigneeId, groupBy, onProjectsLoaded, t]);
 
   if (loading) return <TabSkeleton />;
   if (error) {
@@ -68,6 +77,7 @@ function TimelineContent({
 }
 
 export default function TimelinePage() {
+  const { t } = useI18n();
   const { workspaces, loading: wsLoading, activeTeamId, setTeamId } = usePersistedWorkspace();
   const [listId, setListId] = useState<string | null>(null);
   const [assigneeId, setAssigneeId] = useState<number | null>(null);
@@ -107,31 +117,41 @@ export default function TimelinePage() {
       <div className="flex h-full flex-col">
         <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] px-4 py-2">
           <label className="flex items-center gap-2 text-xs font-medium text-[var(--muted)]">
-            Group by
-            <select
+            {t("common.groupBy")}
+            <Select
               value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as TimelineGroupBy)}
-              className="glass-solid rounded-lg border border-[var(--border-strong)] px-2 py-1 text-xs text-zinc-700 dark:text-zinc-200"
+              onValueChange={(next) => setGroupBy(next as TimelineGroupBy)}
             >
-              <option value="list">List</option>
-              <option value="folder">Folder</option>
-              <option value="space">Space</option>
-            </select>
+              <SelectTrigger size="compact" className="w-[7.5rem]" aria-label={t("common.groupBy")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="list">{t("common.list")}</SelectItem>
+                <SelectItem value="folder">{t("common.folder")}</SelectItem>
+                <SelectItem value="space">{t("common.space")}</SelectItem>
+              </SelectContent>
+            </Select>
           </label>
           <label className="flex items-center gap-2 text-xs font-medium text-[var(--muted)]">
-            Assignee
-            <select
-              value={assigneeId ?? ""}
-              onChange={(e) => setAssigneeId(e.target.value ? Number(e.target.value) : null)}
-              className="glass-solid rounded-lg border border-[var(--border-strong)] px-2 py-1 text-xs text-zinc-700 dark:text-zinc-200"
+            {t("common.assignee")}
+            <Select
+              value={assigneeId != null ? String(assigneeId) : "all"}
+              onValueChange={(next) =>
+                setAssigneeId(next === "all" ? null : Number(next))
+              }
             >
-              <option value="">All</option>
-              {assignees.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger size="compact" className="w-[10rem]" aria-label={t("common.assignee")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("common.all")}</SelectItem>
+                {assignees.map((a) => (
+                  <SelectItem key={a.id} value={String(a.id)}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
         </div>
         <div className="min-h-0 flex-1">

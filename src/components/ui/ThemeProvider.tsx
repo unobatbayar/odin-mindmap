@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 type Theme = "light" | "dark";
 
@@ -36,7 +37,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
+      <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
     </ThemeContext.Provider>
   );
 }

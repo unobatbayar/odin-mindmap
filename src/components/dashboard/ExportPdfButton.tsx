@@ -6,6 +6,7 @@ import {
   exportDashboardPdf,
   type ExportLocale,
 } from "@/lib/dashboard/exportPdf";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { DashboardStats } from "@/types/dashboard";
 
 interface ExportPdfButtonProps {
@@ -19,6 +20,7 @@ export function ExportPdfButton({
   projectName,
   disabled,
 }: ExportPdfButtonProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function ExportPdfButton({
       await exportDashboardPdf(stats, locale, { projectName });
       setOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export failed");
+      setError(err instanceof Error ? err.message : t("error.exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -57,7 +59,7 @@ export function ExportPdfButton({
         className={`${headerDropdownTriggerClass} disabled:opacity-50`}
         aria-haspopup="true"
         aria-expanded={open}
-        title="Export PDF"
+        title={t("export.title")}
       >
         <svg
           width="14"
@@ -73,7 +75,7 @@ export function ExportPdfButton({
         >
           <path d="M3.5 9.5v2h7v-2M7 1.5v7M4.5 6.5L7 9l2.5-2.5" />
         </svg>
-        <span>{exporting ? "Exporting…" : "Export"}</span>
+        <span>{exporting ? t("common.exporting") : t("common.export")}</span>
         <svg
           width="12"
           height="12"
@@ -92,12 +94,12 @@ export function ExportPdfButton({
       {open && (
         <div className="absolute right-0 top-full z-50 mt-1.5 w-[180px] overflow-hidden rounded-xl border border-[var(--border-strong)] glass-solid p-1 shadow-surface-lg">
           <p className="px-2.5 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-[var(--muted)]">
-            PDF language
+            {t("export.pdfLanguage")}
           </p>
           {(
             [
-              { locale: "en" as const, label: "English" },
-              { locale: "mn" as const, label: "Монгол" },
+              { locale: "en" as const, label: t("export.english") },
+              { locale: "mn" as const, label: t("export.mongolian") },
             ] as const
           ).map((opt) => (
             <button

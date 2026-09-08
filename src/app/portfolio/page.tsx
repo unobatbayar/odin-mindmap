@@ -5,6 +5,7 @@ import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
 import { TabPageShell } from "@/components/layout/TabPageShell";
 import { TabSkeleton } from "@/components/layout/TabSkeleton";
 import { usePersistedWorkspace } from "@/hooks/usePersistedWorkspace";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { fetchPortfolioStats } from "@/lib/portfolio/api";
 import type { DashboardProject } from "@/types/dashboard";
 import type { PortfolioStats } from "@/types/portfolio";
@@ -18,6 +19,7 @@ function PortfolioContent({
   listId: string | null;
   onProjectsLoaded: (projects: DashboardProject[]) => void;
 }) {
+  const { t } = useI18n();
   const [stats, setStats] = useState<PortfolioStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ function PortfolioContent({
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load portfolio");
+          setError(err instanceof Error ? err.message : t("error.loadPortfolio"));
           setStats(null);
         }
       })
@@ -53,7 +55,7 @@ function PortfolioContent({
     return () => {
       cancelled = true;
     };
-  }, [teamId, listId, onProjectsLoaded]);
+  }, [teamId, listId, onProjectsLoaded, t]);
 
   if (loading) return <TabSkeleton />;
   if (error) {

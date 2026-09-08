@@ -33,9 +33,9 @@ const MILESTONE_GRACE_MS = 3 * 86_400_000;
 // KPI totals + team workload: all-time by default; optional absolute from/to filters them.
 // Recent activity: relative ?range= unless from/to is set (then that window).
 // Optional ?listId= filters all task-derived sections to one ClickUp list (project).
-// Forecast / milestones / goals stay all-time (within list scope) — ambiguous under absolute range.
+// Forecast / milestones / goals stay all-time (within list scope) - ambiguous under absolute range.
 // Forecast: velocity from last 4 weeks of completions (not completion rate);
-// ETA = (open + inProgress) / velocity — task-count based, not story points.
+// ETA = (open + inProgress) / velocity - task-count based, not story points.
 export async function buildDashboardStats(
   teamId: string,
   range: DashboardDateRange = "30d",

@@ -21,7 +21,7 @@ export interface SingleNode<T> {
 export type VisibleNode<T> = SingleNode<T> | ClusterNode<T>;
 
 /**
- * Sweeps screen-space bars within a single lane (order not required —
+ * Sweeps screen-space bars within a single lane (order not required  - 
  * sorted internally) and merges consecutive bars into a cluster whenever
  * the gap between one bar's right edge and the next's left edge is under
  * clusterGapPx. minBarPx enforces a minimum rendered width per bar (so a

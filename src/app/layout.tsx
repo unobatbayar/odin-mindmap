@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Noto_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -8,16 +9,24 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-sans",
 });
 
+const notoSans = Noto_Sans({
+  subsets: ["cyrillic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-cyrillic",
+});
+
 export const metadata: Metadata = {
   title: "Odin Mindmap",
-  description: "Visualize ClickUp tasks as an interactive mind map",
+  description: "ClickUp даалгавруудыг интерактив оюуны зургаар харуулна",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${jakarta.variable} font-sans antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+    <html lang="mn" suppressHydrationWarning>
+      <body className={`${jakarta.variable} ${notoSans.variable} font-sans antialiased`}>
+        <ThemeProvider>
+          <LocaleProvider>{children}</LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

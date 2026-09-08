@@ -20,8 +20,8 @@ function clamp01(n: number): number {
 /**
  * Compact density strip spanning the full data extent (auto-grown to
  * include wherever the user has panned, rather than clamping pan to the
- * data — see plan notes), with a draggable rectangle showing the current
- * viewport. Dragging pans directly (no easing — this is direct
+ * data - see plan notes), with a draggable rectangle showing the current
+ * viewport. Dragging pans directly (no easing - this is direct
  * manipulation, distinct from the toolbar's animated transitions).
  */
 export function TimelineMinimap({ bars, extentStartMs, extentEndMs, viewStartMs, viewEndMs, onPan }: TimelineMinimapProps) {
@@ -85,7 +85,7 @@ export function TimelineMinimap({ bars, extentStartMs, extentEndMs, viewStartMs,
               style={{
                 left: `${left}%`,
                 width: `${width}%`,
-                backgroundColor: bar.task.status.color || "#818cf8",
+                backgroundColor: bar.task.status.color || "#0071e3",
                 opacity: 0.6,
               }}
             />
@@ -98,7 +98,7 @@ export function TimelineMinimap({ bars, extentStartMs, extentEndMs, viewStartMs,
           onPointerMove={handleViewportPointerMove}
           onPointerUp={handleViewportPointerUp}
           onPointerCancel={handleViewportPointerUp}
-          className="absolute top-0 h-full cursor-grab rounded-md border-2 border-indigo-500/80 bg-indigo-500/10 active:cursor-grabbing dark:border-indigo-400/80"
+          className="absolute top-0 h-full cursor-grab rounded-md border-2 border-blue-500/80 bg-blue-500/10 active:cursor-grabbing dark:border-blue-400/80"
           style={{ left: `${viewLeftPct}%`, width: `${viewWidthPct}%` }}
         />
       </div>

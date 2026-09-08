@@ -27,7 +27,7 @@ export interface MindMapNodeData {
   url?: string;
   /** Accurate direct-child count (only set when known). */
   childCount?: number;
-  /** ClickUp task_count estimate — used only for large-list load confirm, not display. */
+  /** ClickUp task_count estimate - used only for large-list load confirm, not display. */
   loadEstimate?: number;
   childrenLoaded?: boolean;
   listId?: string;
@@ -37,19 +37,19 @@ export interface MindMapNodeData {
   isExpanded?: boolean;
   isLoading?: boolean;
   hasChildren?: boolean;
-  /** For loadmore nodes — the list node id to paginate */
+  /** For loadmore nodes - the list node id to paginate */
   listParentId?: string;
-  /** For addtask nodes — parent node to create under */
+  /** For addtask nodes - parent node to create under */
   addTaskParentId?: string;
-  /** For addtask nodes — ClickUp list id for the new task */
+  /** For addtask nodes - ClickUp list id for the new task */
   addTaskListId?: string;
-  /** For addtask nodes — optional parent task id (subtask) */
+  /** For addtask nodes - optional parent task id (subtask) */
   addTaskParentTaskId?: string;
   /** Remaining task count shown on load-more node */
   remainingCount?: number;
   /** Render in compact mode (dense lists) */
   compact?: boolean;
-  /** Workspace id — for member nodes fetching assignee tasks */
+  /** Workspace id - for member nodes fetching assignee tasks */
   workspaceId?: string;
   [key: string]: unknown;
 }

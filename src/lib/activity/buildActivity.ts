@@ -11,8 +11,6 @@ import type { DashboardDateRange } from "@/types/dashboard";
 import type { ActivityEvent, ActivityStats } from "@/types/activity";
 
 const PAGE_LIMIT = 80;
-/** Treat date_updated near closedAt as the completion itself, not a separate edit. */
-const COMPLETION_UPDATE_WINDOW_MS = 60_000;
 
 function dayLabel(ts: number): string {
   return new Date(ts).toLocaleDateString("en-US", {
@@ -44,6 +42,7 @@ export async function buildActivityStats(
       closedAt !== null && closedAt >= rangeStart;
 
     if (hasCompletedInRange) {
+      // Completion already covers the closing update — don't also emit Updated.
       events.push({
         id: `${task.id}-completed`,
         kind: "completed",
@@ -51,20 +50,10 @@ export async function buildActivityStats(
         at: String(closedAt),
         dayLabel: dayLabel(closedAt),
       });
+      continue;
     }
 
-    // Skip Updated when it is the same completion bump; keep it for a
-    // clear post-completion edit (updated meaningfully after closedAt).
-    const isPostCompletionEdit =
-      hasCompletedInRange &&
-      updated !== null &&
-      updated > closedAt + COMPLETION_UPDATE_WINDOW_MS;
-
-    if (
-      updated !== null &&
-      updated >= rangeStart &&
-      (!hasCompletedInRange || isPostCompletionEdit)
-    ) {
+    if (updated !== null && updated >= rangeStart) {
       events.push({
         id: `${task.id}-updated`,
         kind: "updated",
@@ -83,6 +72,6 @@ export async function buildActivityStats(
     listId,
     projects: extractProjects(allTasks),
     events: events.slice(0, PAGE_LIMIT),
-    phase2: { forms: "Coming soon — form submissions in activity feed" },
+    phase2: { forms: "Coming soon: form submissions in activity feed" },
   };
 }

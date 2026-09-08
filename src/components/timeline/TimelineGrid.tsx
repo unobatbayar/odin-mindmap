@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { getHeaderTicks } from "@/lib/timeline/dateTicks";
 import { msToPx } from "@/lib/timeline/viewport";
 import { DAY_MS } from "@/lib/timeline/constants";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import type { Locale } from "@/lib/i18n/locale";
 import type { LodTier } from "@/types/timelineViewport";
 
 interface TimelineGridProps {
@@ -12,6 +14,7 @@ interface TimelineGridProps {
   pxPerDay: number;
   lodTier: LodTier;
   heightPx: number;
+  locale: Locale;
 }
 
 function* weekendSpans(viewStartMs: number, viewEndMs: number) {
@@ -32,13 +35,17 @@ function* weekendSpans(viewStartMs: number, viewEndMs: number) {
 }
 
 /**
- * Background gridlines, weekend shading, and the "Today" marker — rendered
+ * Background gridlines, weekend shading, and the "Today" marker - rendered
  * as absolutely-positioned divs in the same coordinate space as the event
  * bars (not SVG), so grid and bars stay pixel-consistent under one
  * time->pixel mapping instead of two separately-implemented systems.
  */
-export function TimelineGrid({ viewStartMs, viewEndMs, pxPerDay, lodTier, heightPx }: TimelineGridProps) {
-  const ticks = useMemo(() => getHeaderTicks(viewStartMs, viewEndMs, lodTier), [viewStartMs, viewEndMs, lodTier]);
+export function TimelineGrid({ viewStartMs, viewEndMs, pxPerDay, lodTier, heightPx, locale }: TimelineGridProps) {
+  const { t } = useI18n();
+  const ticks = useMemo(
+    () => getHeaderTicks(viewStartMs, viewEndMs, lodTier, locale),
+    [viewStartMs, viewEndMs, lodTier, locale],
+  );
   const showWeekends = lodTier === "day" || lodTier === "week";
   const weekends = useMemo(
     () => (showWeekends ? [...weekendSpans(viewStartMs, viewEndMs)] : []),
@@ -78,7 +85,7 @@ export function TimelineGrid({ viewStartMs, viewEndMs, pxPerDay, lodTier, height
           style={{ left: 0, height: heightPx, transform: `translateX(${todayX}px)` }}
         >
           <span className="absolute left-1 top-0 whitespace-nowrap rounded-b px-1 py-0.5 text-[9px] font-bold text-white shadow-sm" style={{ backgroundColor: "#f97316" }}>
-            Today
+            {t("common.today")}
           </span>
         </div>
       )}

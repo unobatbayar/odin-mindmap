@@ -1,3 +1,13 @@
+"use client";
+
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import {
+  List,
+  ListGroup,
+  ListItem,
+  ListItemContent,
+  ListItemTitle,
+} from "@/components/ui/list";
 import type { DashboardGoal } from "@/types/dashboard";
 
 function formatProgress(kr: DashboardGoal["keyResults"][number]): string {
@@ -16,14 +26,16 @@ interface GoalsSectionProps {
 }
 
 export function GoalsSection({ goals }: GoalsSectionProps) {
+  const { t } = useI18n();
+
   if (goals.length === 0) {
     return (
       <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
         <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-          Goals & KPIs
+          {t("dashboard.goalsKpis")}
         </h2>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          No goals configured in this workspace.
+          {t("dashboard.noGoals")}
         </p>
       </section>
     );
@@ -32,7 +44,7 @@ export function GoalsSection({ goals }: GoalsSectionProps) {
   return (
     <section className="glass-strong rounded-2xl border border-[var(--border)] p-5 shadow-surface">
       <h2 className="text-sm font-bold text-zinc-800 dark:text-zinc-100">
-        Goals & KPIs
+        {t("dashboard.goalsKpis")}
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {goals.map((goal) => {
@@ -42,32 +54,35 @@ export function GoalsSection({ goals }: GoalsSectionProps) {
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
                   {goal.name}
                 </p>
-                <span className="shrink-0 text-lg font-bold tabular-nums text-indigo-600 dark:text-indigo-400">
+                <span className="shrink-0 text-lg font-bold tabular-nums text-blue-600 dark:text-blue-400">
                   {goal.percentComplete}%
                 </span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--border)]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                  className="h-full rounded-full bg-[var(--accent)]"
                   style={{ width: `${Math.min(goal.percentComplete, 100)}%` }}
                 />
               </div>
               {goal.keyResults.length > 0 && (
-                <ul className="mt-3 space-y-1.5">
-                  {goal.keyResults.map((kr, i) => (
-                    <li
-                      key={`${goal.id}-kr-${i}`}
-                      className="flex items-center justify-between gap-2 text-xs"
-                    >
-                      <span className="truncate text-zinc-700 dark:text-zinc-300">
-                        {kr.name}
-                      </span>
-                      <span className="shrink-0 font-medium tabular-nums text-[var(--muted)]">
-                        {formatProgress(kr)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <List className="mt-3">
+                  <ListGroup>
+                    {goal.keyResults.map((kr, i) => (
+                      <li key={`${goal.id}-kr-${i}`} className="list-none">
+                        <ListItem className="!px-3 !py-2">
+                          <ListItemContent>
+                            <ListItemTitle className="text-xs font-medium">
+                              {kr.name}
+                            </ListItemTitle>
+                          </ListItemContent>
+                          <span className="shrink-0 text-xs font-medium tabular-nums text-[var(--muted)]">
+                            {formatProgress(kr)}
+                          </span>
+                        </ListItem>
+                      </li>
+                    ))}
+                  </ListGroup>
+                </List>
               )}
             </>
           );
@@ -79,7 +94,7 @@ export function GoalsSection({ goals }: GoalsSectionProps) {
                 href={goal.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-[var(--border)] bg-[var(--panel-solid)]/50 p-4 transition-colors hover:border-indigo-300/50 dark:hover:border-indigo-700/50"
+                className="block rounded-xl border border-[var(--border)] bg-[var(--panel-solid)]/50 p-4 transition-colors hover:border-blue-300/50 dark:hover:border-blue-700/50"
               >
                 {content}
               </a>

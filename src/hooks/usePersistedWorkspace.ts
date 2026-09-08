@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorkspaces } from "./useWorkspaces";
 
 export const WORKSPACE_STORAGE_KEY = "odin_workspace_id";
@@ -26,10 +26,18 @@ export function usePersistedWorkspace() {
     setTeamIdState(id);
     try {
       window.localStorage.setItem(WORKSPACE_STORAGE_KEY, id);
+      window.dispatchEvent(new Event("odin-workspace-change"));
     } catch {
       // ignore
     }
   }, []);
+
+  // Persist the fallback workspace so settings / hide-people always have a teamId.
+  useEffect(() => {
+    if (!loading && activeTeamId && activeTeamId !== teamId) {
+      setTeamId(activeTeamId);
+    }
+  }, [loading, activeTeamId, teamId, setTeamId]);
 
   return { workspaces, loading, activeTeamId, setTeamId };
 }

@@ -107,9 +107,9 @@ export async function buildPortfolioStats(
     staleTasks,
     atRiskMilestones,
     phase2: {
-      customFields: "Coming soon — custom field rollups per project",
-      forms: "Coming soon — form submission pipeline",
-      attachments: "Coming soon — proofing & attachment previews",
+      customFields: "Coming soon: custom field rollups per project",
+      forms: "Coming soon: form submission pipeline",
+      attachments: "Coming soon: proofing & attachment previews",
     },
   };
 }
