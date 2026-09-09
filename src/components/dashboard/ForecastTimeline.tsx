@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { startOfWeek } from "@/lib/datetime";
 import type { TranslateFn } from "@/lib/i18n/format";
 import type {
   DashboardForecast,
@@ -32,15 +33,6 @@ interface BurndownData {
 }
 
 const WEEK_MS = 7 * 86_400_000;
-
-function startOfWeek(ts: number): number {
-  const d = new Date(ts);
-  const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - diff);
-  return d.getTime();
-}
 
 function confidenceLabel(
   confidence: DashboardForecast["confidence"],

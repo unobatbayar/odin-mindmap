@@ -1,3 +1,4 @@
+import { APP_TIMEZONE } from "@/lib/datetime";
 import { interpolate } from "./interpolate";
 import { bcp47, type Locale } from "./locale";
 import { messages, type MessageKey } from "./messages";
@@ -28,6 +29,7 @@ export function formatDate(isoOrMs: string | number, locale: Locale): string {
   const d = parseDate(isoOrMs);
   if (!d) return "-";
   return d.toLocaleDateString(bcp47(locale), {
+    timeZone: APP_TIMEZONE,
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -36,6 +38,7 @@ export function formatDate(isoOrMs: string | number, locale: Locale): string {
 
 export function formatWeekLabel(ts: number, locale: Locale): string {
   return new Date(ts).toLocaleDateString(bcp47(locale), {
+    timeZone: APP_TIMEZONE,
     month: "short",
     day: "numeric",
   });
@@ -43,6 +46,7 @@ export function formatWeekLabel(ts: number, locale: Locale): string {
 
 export function formatDayHeading(ts: number, locale: Locale): string {
   return new Date(ts).toLocaleDateString(bcp47(locale), {
+    timeZone: APP_TIMEZONE,
     weekday: "short",
     month: "short",
     day: "numeric",

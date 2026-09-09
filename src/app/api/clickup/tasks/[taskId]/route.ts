@@ -1,7 +1,7 @@
 import { updateTask, deleteTask } from "@/lib/clickup/tasks";
 import { clickupErrorResponse } from "@/lib/clickup/client";
+import { sanitizeTaskUpdate } from "@/lib/clickup/sanitize";
 import { isAdminRequest } from "@/lib/admin";
-import type { TaskUpdatePayload } from "@/types/clickup";
 
 export async function PATCH(
   request: Request,
@@ -13,15 +13,19 @@ export async function PATCH(
 
   try {
     const { taskId } = await params;
-    const body = (await request.json()) as TaskUpdatePayload;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    const payload: TaskUpdatePayload = {};
-    if (body.name !== undefined) payload.name = body.name;
-    if (body.status !== undefined) payload.status = body.status;
-    if (body.priority !== undefined) payload.priority = body.priority;
-    if (body.assignees !== undefined) payload.assignees = body.assignees;
+    const sanitized = sanitizeTaskUpdate(body);
+    if (!sanitized.ok) {
+      return Response.json({ error: sanitized.error }, { status: 400 });
+    }
 
-    const task = await updateTask(taskId, payload);
+    const task = await updateTask(taskId, sanitized.payload);
     return Response.json({ task });
   } catch (error) {
     return clickupErrorResponse(error);

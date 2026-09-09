@@ -33,6 +33,16 @@ interface TaskListItemProps {
   className?: string;
 }
 
+function safeHttpUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") return url;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export function TaskListItem({
   task,
   meta,
@@ -46,11 +56,17 @@ export function TaskListItem({
   const subtitle =
     description ??
     [task.listName ?? t("common.unknownList"), meta].filter(Boolean).join(" · ");
+  const href = safeHttpUrl(task.url);
 
   return (
     <li className={cn("list-none", className)}>
       <ListItem asChild danger={danger}>
-        <a href={task.url} target="_blank" rel="noopener noreferrer">
+        <a
+          href={href ?? undefined}
+          target={href ? "_blank" : undefined}
+          rel={href ? "noopener noreferrer" : undefined}
+          onClick={href ? undefined : (e) => e.preventDefault()}
+        >
           <ListItemContent>
             <ListItemTitle>{task.name}</ListItemTitle>
             <ListItemDescription>{subtitle}</ListItemDescription>

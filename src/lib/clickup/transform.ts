@@ -127,7 +127,7 @@ export function memberToNode(
       type: "member",
       clickupId: String(user.id),
       parentId,
-      label: user.username || user.email || `User ${user.id}`,
+      label: user.username?.trim() || `User ${user.id}`,
       assignees: [
         { id: user.id, username: user.username, profilePicture: user.profilePicture },
       ],

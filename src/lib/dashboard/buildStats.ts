@@ -1,7 +1,6 @@
 import { getGoals } from "@/lib/clickup/goals";
-import { getMembers } from "@/lib/clickup/members";
-import { getMilestoneTasks, getTasksForAssignee } from "@/lib/clickup/tasks";
 import { buildTeamWorkload } from "@/lib/dashboard/buildTeamWorkload";
+import { fetchWorkspaceTasks } from "@/lib/workspace/fetchWorkspaceTasks";
 import {
   buildWeeklyCompleted,
   extractProjects,
@@ -14,7 +13,6 @@ import {
   toAssignee,
   toTaskSummary,
 } from "@/lib/dashboard/taskMetrics";
-import { mapWithConcurrency } from "@/lib/utils/concurrency";
 import type {
   DashboardDateRange,
   DashboardForecast,
@@ -25,7 +23,6 @@ import type {
 } from "@/types/dashboard";
 import type { ClickUpTask } from "@/types/clickup";
 
-const CONCURRENCY = 6;
 const RECENT_LIMIT = 15;
 const VELOCITY_WINDOW_WEEKS = 4;
 const MILESTONE_GRACE_MS = 3 * 86_400_000;
@@ -43,27 +40,10 @@ export async function buildDashboardStats(
   from: string | null = null,
   to: string | null = null,
 ): Promise<DashboardStats> {
-  const members = await getMembers(teamId);
-
-  const [memberTasks, milestoneTasks, goals] = await Promise.all([
-    mapWithConcurrency(members, CONCURRENCY, async (member) =>
-      getTasksForAssignee(teamId, String(member.user.id)),
-    ),
-    getMilestoneTasks(teamId),
+  const [{ members, memberTasks, allTasks }, goals] = await Promise.all([
+    fetchWorkspaceTasks(teamId),
     getGoals(teamId).catch(() => [] as Awaited<ReturnType<typeof getGoals>>),
   ]);
-
-  const taskMap = new Map<string, ClickUpTask>();
-  for (const tasks of memberTasks) {
-    for (const task of tasks) {
-      taskMap.set(task.id, task);
-    }
-  }
-  for (const task of milestoneTasks) {
-    taskMap.set(task.id, task);
-  }
-
-  const allTasks = [...taskMap.values()];
   const projects = extractProjects(allTasks);
   const listTasks = listId
     ? allTasks.filter((t) => t.list?.id === listId)

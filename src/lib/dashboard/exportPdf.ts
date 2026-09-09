@@ -1,5 +1,6 @@
 import type { DashboardStats } from "@/types/dashboard";
 import type { Content, TDocumentDefinitions, TableCell } from "pdfmake/interfaces";
+import { APP_TIMEZONE } from "@/lib/datetime";
 
 export type ExportLocale = "en" | "mn";
 
@@ -167,6 +168,7 @@ function formatDate(isoOrMs: string | null | undefined, locale: ExportLocale): s
       : new Date(isoOrMs.includes("T") ? isoOrMs : `${isoOrMs}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString(locale === "mn" ? "mn-MN" : "en-US", {
+    timeZone: APP_TIMEZONE,
     year: "numeric",
     month: "short",
     day: "numeric",

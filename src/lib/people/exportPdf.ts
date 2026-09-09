@@ -1,4 +1,5 @@
 import type { Content, TDocumentDefinitions, TableCell } from "pdfmake/interfaces";
+import { APP_TIMEZONE } from "@/lib/datetime";
 import { INSIGHT_MESSAGE_KEYS } from "@/lib/people/metrics";
 import { translate } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locale";
@@ -184,6 +185,7 @@ function formatDate(isoOrMs: string | null | undefined, locale: ExportLocale): s
       : new Date(String(isoOrMs).includes("T") ? isoOrMs : `${isoOrMs}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString(locale === "mn" ? "mn-MN" : "en-US", {
+    timeZone: APP_TIMEZONE,
     year: "numeric",
     month: "short",
     day: "numeric",

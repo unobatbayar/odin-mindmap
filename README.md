@@ -73,3 +73,4 @@ The app is **publicly readable**. Anyone with the URL can view the mind map and 
 |----------|----------|-------------|
 | `CLICKUP_TOKEN` | Yes | Personal API token from ClickUp settings |
 | `ADMIN_PIN` | Yes (for editing) | Server-only PIN to unlock task create/update/delete. Editing is disabled if unset. |
+| `APP_TIMEZONE` | No | IANA timezone for on-time / date-range / week buckets. Defaults to `Asia/Ulaanbaatar`. |

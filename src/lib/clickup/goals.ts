@@ -1,4 +1,5 @@
 import { clickup } from "./client";
+import { clickupPathId } from "./ids";
 import { mapWithConcurrency } from "@/lib/utils/concurrency";
 import type {
   ClickUpGoal,
@@ -15,7 +16,9 @@ function flattenGoals(data: ClickUpGoalsResponse): ClickUpGoal[] {
 }
 
 export async function getGoals(teamId: string): Promise<ClickUpGoal[]> {
-  const data = await clickup<ClickUpGoalsResponse>(`/team/${teamId}/goal`);
+  const data = await clickup<ClickUpGoalsResponse>(
+    `/team/${clickupPathId(teamId)}/goal`,
+  );
   const goals = flattenGoals(data);
 
   const withKeyResults = goals.filter(
@@ -25,7 +28,9 @@ export async function getGoals(teamId: string): Promise<ClickUpGoal[]> {
   if (withKeyResults.length === 0) return goals;
 
   const details = await mapWithConcurrency(withKeyResults, 6, async (goal) => {
-    const res = await clickup<ClickUpGoalResponse>(`/goal/${goal.id}`);
+    const res = await clickup<ClickUpGoalResponse>(
+      `/goal/${clickupPathId(goal.id)}`,
+    );
     return res.goal;
   });
 

@@ -7,6 +7,12 @@ import {
   toTaskSummary,
   type AbsoluteDateRange,
 } from "@/lib/dashboard/taskMetrics";
+import {
+  calendarDayKey,
+  formatWeekLabel,
+  startOfDay,
+  startOfWeek,
+} from "@/lib/datetime";
 import type {
   GradeImprovement,
   GradeImprovementId,
@@ -37,27 +43,13 @@ const CYCLE_TIME_MIN_SAMPLE = 3;
 const RECENT_COMPLETED_LIMIT = 15;
 const PROJECT_MIX_LIMIT = 8;
 
-export function startOfDay(ts: number): number {
-  const d = new Date(ts);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-export function startOfWeek(ts: number): number {
-  const d = new Date(ts);
-  const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - diff);
-  return d.getTime();
-}
-
-export function formatWeekLabel(ts: number): string {
-  return new Date(ts).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
+export {
+  APP_TIMEZONE,
+  calendarDayKey,
+  formatWeekLabel,
+  startOfDay,
+  startOfWeek,
+} from "@/lib/datetime";
 
 export function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -218,8 +210,8 @@ export function computeOnTime(tasks: ClickUpTask[]): {
     if (!closedAt) continue;
     dated++;
     // ClickUp due dates are usually midnight, not a time of day.
-    // Finishing anytime on the due date still counts as on time.
-    if (startOfDay(closedAt) <= startOfDay(due)) onTime++;
+    // Finishing anytime on the due calendar day (APP_TIMEZONE) counts as on time.
+    if (calendarDayKey(closedAt) <= calendarDayKey(due)) onTime++;
   }
 
   return {

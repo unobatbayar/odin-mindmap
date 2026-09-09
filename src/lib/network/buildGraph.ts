@@ -50,7 +50,9 @@ export async function buildNetworkGraph(teamId: string): Promise<NetworkGraph> {
 
   const memberTasks = await mapWithConcurrency(members, 6, async (member) => {
     const userId = String(member.user.id);
-    const tasks = await getTasksForAssignee(teamId, userId);
+    const tasks = await getTasksForAssignee(teamId, userId).catch(
+      () => [] as Awaited<ReturnType<typeof getTasksForAssignee>>,
+    );
     return { member, userId, tasks };
   });
 
