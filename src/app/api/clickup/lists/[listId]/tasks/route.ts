@@ -3,8 +3,8 @@ import { getList } from "@/lib/clickup/lists";
 import { tasksToNodes, taskToNode } from "@/lib/clickup/transform";
 import { clickupErrorResponse } from "@/lib/clickup/client";
 import { isAdminRequest } from "@/lib/admin";
+import { sanitizeTaskCreate } from "@/lib/clickup/sanitize";
 import { makeNodeId } from "@/types/mindmap";
-import type { TaskCreatePayload } from "@/types/clickup";
 
 export async function GET(
   _request: Request,
@@ -41,18 +41,20 @@ export async function POST(
 
   try {
     const { listId } = await params;
-    const body = (await request.json()) as TaskCreatePayload;
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return Response.json({ error: "Invalid request body" }, { status: 400 });
+    }
 
-    if (!body.name?.trim()) {
-      return Response.json({ error: "Task name is required" }, { status: 400 });
+    const sanitized = sanitizeTaskCreate(body);
+    if (!sanitized.ok) {
+      return Response.json({ error: sanitized.error }, { status: 400 });
     }
 
     const [task, list] = await Promise.all([
-      createTask(listId, {
-        name: body.name.trim(),
-        parent: body.parent,
-        assignees: body.assignees,
-      }),
+      createTask(listId, sanitized.payload),
       getList(listId).catch(() => null),
     ]);
 
@@ -61,8 +63,8 @@ export async function POST(
       color: s.color,
     }));
 
-    const parentId = body.parent
-      ? makeNodeId("task", body.parent)
+    const parentId = sanitized.payload.parent
+      ? makeNodeId("task", sanitized.payload.parent)
       : makeNodeId("list", listId);
 
     const node = taskToNode(task, parentId, statuses);

@@ -165,9 +165,11 @@ export function HeaderSelect({
   "aria-label"?: string;
   className?: string;
 }) {
+  const selectValue = value || EMPTY;
+
   return (
     <Select
-      value={allowEmpty ? value || EMPTY : value || undefined}
+      value={selectValue}
       onValueChange={(next) => onValueChange(next === EMPTY ? "" : next)}
       disabled={disabled}
     >
@@ -175,8 +177,10 @@ export function HeaderSelect({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {allowEmpty ? (
-          <SelectItem value={EMPTY}>{emptyLabel}</SelectItem>
+        {allowEmpty || !value ? (
+          <SelectItem value={EMPTY} disabled={!allowEmpty}>
+            {allowEmpty ? emptyLabel : placeholder || "—"}
+          </SelectItem>
         ) : null}
         {options.map((opt) => (
           <SelectItem key={opt.value} value={opt.value}>

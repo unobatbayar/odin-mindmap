@@ -189,9 +189,12 @@ describe("computeOnTime", () => {
   });
 
   it("counts same-calendar-day closes as on time even after midnight due timestamps", () => {
-    const dueMidnight = new Date(2026, 8, 3, 0, 0, 0, 0).getTime();
-    const closedAfternoon = new Date(2026, 8, 3, 16, 30, 0, 0).getTime();
-    const closedNextDay = new Date(2026, 8, 4, 9, 0, 0, 0).getTime();
+    // Due: 2026-09-03 00:00 Asia/Ulaanbaatar (ClickUp-style date-only).
+    const dueMidnight = Date.parse("2026-09-02T16:00:00.000Z");
+    // Closed later that same UB calendar day.
+    const closedAfternoon = Date.parse("2026-09-03T10:30:00.000Z");
+    // Closed the next UB calendar day.
+    const closedNextDay = Date.parse("2026-09-04T01:00:00.000Z");
     const tasks = [
       task({
         id: "same-day",
@@ -216,6 +219,36 @@ describe("computeOnTime", () => {
     expect(result.dated).toBe(3);
     expect(result.onTime).toBe(2);
     expect(result.rate).toBe(67);
+  });
+
+  it("does not mark same UB due day late when the server runs in UTC", () => {
+    // Host-local setHours(0,0,0,0) on UTC would treat due as Sept 2 and close as Sept 3.
+    const due = Date.parse("2026-09-02T16:00:00.000Z"); // Sept 3 00:00 UB
+    const closedAt = Date.parse("2026-09-03T10:00:00.000Z"); // Sept 3 18:00 UB
+    const tasks = [
+      task({
+        id: "a",
+        status: closed,
+        due_date: String(due),
+        date_closed: String(closedAt),
+      }),
+      task({
+        id: "b",
+        status: done,
+        due_date: String(due),
+        date_done: String(closedAt),
+      }),
+      task({
+        id: "c",
+        status: closed,
+        due_date: String(due),
+        date_closed: String(closedAt),
+      }),
+    ];
+    const result = computeOnTime(tasks);
+    expect(result.dated).toBe(3);
+    expect(result.onTime).toBe(3);
+    expect(result.rate).toBe(100);
   });
 });
 

@@ -387,6 +387,7 @@ export const en = {
 
   "kpi.completed": "Completed",
   "kpi.completedSub": "Finished in this period",
+  "kpi.viewTasks": "View tasks",
   "kpi.openInProgress": "Open / in progress",
   "kpi.openMix": "{open} open · {inProgress} in progress",
   "kpi.completionRate": "Completion rate",
@@ -847,6 +848,7 @@ export const mn: Record<MessageKey, string> = {
 
   "kpi.completed": "Дууссан",
   "kpi.completedSub": "Энэ хугацаанд дууссан",
+  "kpi.viewTasks": "Даалгавар харах",
   "kpi.openInProgress": "Нээлттэй / хийгдэж буй",
   "kpi.openMix": "{open} нээлттэй · {inProgress} хийгдэж буй",
   "kpi.completionRate": "Гүйцэтгэлийн хувь",

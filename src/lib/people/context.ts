@@ -74,7 +74,6 @@ export async function loadFilteredPeopleContext(
 }
 
 export function memberDisplayName(member: ClickUpMember): string {
-  return (
-    member.user.username || member.user.email || `User ${member.user.id}`
-  );
+  const name = member.user.username?.trim();
+  return name || `User ${member.user.id}`;
 }

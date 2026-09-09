@@ -16,15 +16,18 @@ export async function fetchWorkspaceTasks(
 ): Promise<WorkspaceTasksBundle> {
   const members = await getMembers(teamId);
 
-  const [memberTasks, milestoneTasks] = await Promise.all([
-    mapWithConcurrency(members, CONCURRENCY, async (member) =>
-      getTasksForAssignee(teamId, String(member.user.id)),
+  const [memberResults, milestoneTasks] = await Promise.all([
+    mapWithConcurrency(members, CONCURRENCY, (member) =>
+      getTasksForAssignee(teamId, String(member.user.id)).then(
+        (tasks) => tasks,
+        () => [] as ClickUpTask[],
+      ),
     ),
-    getMilestoneTasks(teamId),
+    getMilestoneTasks(teamId).catch(() => [] as ClickUpTask[]),
   ]);
 
   const taskMap = new Map<string, ClickUpTask>();
-  for (const tasks of memberTasks) {
+  for (const tasks of memberResults) {
     for (const task of tasks) {
       taskMap.set(task.id, task);
     }
@@ -35,7 +38,7 @@ export async function fetchWorkspaceTasks(
 
   return {
     members,
-    memberTasks,
+    memberTasks: memberResults,
     allTasks: [...taskMap.values()],
   };
 }

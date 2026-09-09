@@ -6,6 +6,13 @@ import type {
 } from "@/types/dashboard";
 import type { ClickUpTask, ClickUpUser } from "@/types/clickup";
 import { isFinishedStatus } from "@/lib/clickup/status";
+import {
+  calendarDayKey,
+  endOfIsoDate,
+  formatWeekLabel,
+  startOfIsoDate,
+  startOfWeek,
+} from "@/lib/datetime";
 
 export { isFinishedStatus } from "@/lib/clickup/status";
 
@@ -34,13 +41,7 @@ function parseDateBoundary(
 ): number | null {
   const trimmed = value.trim();
   if (ISO_DATE_RE.test(trimmed)) {
-    const [y, m, d] = trimmed.split("-").map(Number);
-    const date =
-      edge === "start"
-        ? new Date(y, m - 1, d, 0, 0, 0, 0)
-        : new Date(y, m - 1, d, 23, 59, 59, 999);
-    const ms = date.getTime();
-    return Number.isFinite(ms) ? ms : null;
+    return edge === "start" ? startOfIsoDate(trimmed) : endOfIsoDate(trimmed);
   }
   const n = Number(trimmed);
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -57,13 +58,7 @@ export function parseAbsoluteDateRange(
   const toMs = parseDateBoundary(to, "end");
   if (fromMs === null || toMs === null || fromMs > toMs) return null;
 
-  const toIso = (ms: number) => {
-    const d = new Date(ms);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  const toIso = (ms: number) => calendarDayKey(ms);
 
   return {
     from: ISO_DATE_RE.test(from.trim()) ? from.trim() : toIso(fromMs),
@@ -204,19 +199,6 @@ export function countTaskBuckets(
   };
 }
 
-function startOfWeek(ts: number): number {
-  const d = new Date(ts);
-  const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - diff);
-  return d.getTime();
-}
-
-function formatWeekLabel(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 export function buildWeeklyCompleted(
   tasks: ClickUpTask[],

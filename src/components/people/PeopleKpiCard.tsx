@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 
 export type PeopleKpiTone =
   | "emerald"
@@ -213,6 +214,7 @@ export function PeopleKpiCard({
   active = false,
   interactive = false,
 }: PeopleKpiCardProps) {
+  const { t } = useI18n();
   const colors = toneStyles[tone];
   const className = [
     "relative overflow-hidden glass-strong rounded-2xl border border-[var(--border)] p-4 shadow-surface text-left w-full",
@@ -247,7 +249,7 @@ export function PeopleKpiCard({
       ) : null}
       {interactive ? (
         <p className="mt-1.5 text-[10px] font-semibold text-[var(--accent)]">
-          View tasks →
+          {t("kpi.viewTasks")} →
         </p>
       ) : null}
     </>

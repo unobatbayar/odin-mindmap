@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import {
   ADMIN_COOKIE,
   adminCookieOptions,
+  adminSessionToken,
   getAdminPin,
+  isAdminCookie,
   safeEqualPin,
 } from "@/lib/admin";
 import {
@@ -14,7 +16,7 @@ import {
 
 export async function GET() {
   const cookieStore = await cookies();
-  const unlocked = cookieStore.get(ADMIN_COOKIE)?.value === "1";
+  const unlocked = isAdminCookie(cookieStore.get(ADMIN_COOKIE)?.value);
   return Response.json({ unlocked });
 }
 
@@ -51,14 +53,19 @@ export async function POST(request: Request) {
 
   clearAdminUnlockFailures(ip);
 
+  const token = adminSessionToken(adminPin);
+  if (!token) {
+    return Response.json({ error: "Admin PIN is not configured" }, { status: 503 });
+  }
+
   const cookieStore = await cookies();
-  cookieStore.set(ADMIN_COOKIE, "1", adminCookieOptions());
+  cookieStore.set(ADMIN_COOKIE, token, adminCookieOptions());
 
   return Response.json({ unlocked: true });
 }
 
 export async function DELETE() {
   const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_COOKIE);
+  cookieStore.set(ADMIN_COOKIE, "", { ...adminCookieOptions(), maxAge: 0 });
   return Response.json({ unlocked: false });
 }

@@ -34,12 +34,13 @@ export function CollapsibleTaskGroups({
   );
 
   // Keep the open section valid when filter/data changes.
+  // null means intentionally collapsed — do not auto-reopen.
   useEffect(() => {
     if (groups.length === 0) {
       setOpenLabel(null);
       return;
     }
-    if (!groups.some((g) => g.label === openLabel)) {
+    if (openLabel !== null && !groups.some((g) => g.label === openLabel)) {
       setOpenLabel(groups[0].label);
     }
   }, [groups, openLabel]);

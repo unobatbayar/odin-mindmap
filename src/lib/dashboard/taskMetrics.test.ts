@@ -26,13 +26,18 @@ describe("parseAbsoluteDateRange", () => {
     expect(parseAbsoluteDateRange("2026-07-01", "2026-01-01")).toBeNull();
   });
 
-  it("parses inclusive local day bounds", () => {
+  it("parses inclusive Asia/Ulaanbaatar day bounds", () => {
     const range = parseAbsoluteDateRange("2026-01-01", "2026-06-30");
     expect(range).not.toBeNull();
     expect(range!.from).toBe("2026-01-01");
     expect(range!.to).toBe("2026-06-30");
-    expect(range!.fromMs).toBe(new Date(2026, 0, 1, 0, 0, 0, 0).getTime());
-    expect(range!.toMs).toBe(new Date(2026, 5, 30, 23, 59, 59, 999).getTime());
+    // Jan 1 00:00 UB = Dec 31 16:00 UTC; Jun 30 23:59:59.999 UB = Jun 30 15:59:59.999 UTC
+    expect(range!.fromMs).toBe(Date.parse("2025-12-31T16:00:00.000Z"));
+    expect(range!.toMs).toBe(Date.parse("2026-06-30T15:59:59.999Z"));
+  });
+
+  it("rejects invalid calendar dates", () => {
+    expect(parseAbsoluteDateRange("2026-02-31", "2026-03-01")).toBeNull();
   });
 });
 

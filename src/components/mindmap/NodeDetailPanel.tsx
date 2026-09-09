@@ -225,11 +225,19 @@ export function NodeDetailPanel({
             {statusOptions.length > 0 && (
               <div>
                 <FieldLabel>{t("common.status")}</FieldLabel>
-                <Select value={status || undefined} onValueChange={setStatus}>
+                <Select
+                  value={status || "__pending__"}
+                  onValueChange={setStatus}
+                >
                   <SelectTrigger aria-label={t("common.status")}>
                     <SelectValue placeholder={t("common.selectStatus")} />
                   </SelectTrigger>
                   <SelectContent>
+                    {!status ? (
+                      <SelectItem value="__pending__" disabled>
+                        {t("common.selectStatus")}
+                      </SelectItem>
+                    ) : null}
                     {statusOptions.map((s) => (
                       <SelectItem key={s.name} value={s.name}>
                         {s.name}
